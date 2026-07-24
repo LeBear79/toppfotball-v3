@@ -219,3 +219,11 @@ select{-webkit-appearance:none;appearance:none}
 }
 .button,input,select,.skill-card,.card{transition:border-color .2s,box-shadow .2s,transform .2s,background .2s}
 .button:active{transform:translateY(1px)}
+
+
+/* Profilbilde: kamera eller bildebibliotek */
+.profile-image-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.camera-button,.file-picker-button{display:flex;align-items:center;justify-content:center;min-height:48px;text-align:center;cursor:pointer;box-sizing:border-box}
+.visually-hidden-file{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.image-status{min-height:1.2em;margin:8px 0 0;color:var(--muted,#aeb9c9);font-size:.88rem}
+@media(max-width:460px){.profile-image-actions{grid-template-columns:1fr}}

@@ -169,6 +169,28 @@ function bindEvents() {
     document.getElementById("profile-name").focus();
   });
   document.getElementById("delete-profile-button").addEventListener("click", deleteProfile);
+
+  const cameraInput = document.getElementById("profile-camera");
+  const galleryInput = document.getElementById("profile-image");
+  const imageStatus = document.getElementById("profile-image-status");
+
+  document.getElementById("take-profile-photo-button").addEventListener("click", () => {
+    cameraInput.click();
+  });
+
+  cameraInput.addEventListener("change", () => {
+    if (cameraInput.files[0]) {
+      galleryInput.value = "";
+      imageStatus.textContent = "Nytt bilde fra kameraet er klart. Trykk Lagre bruker.";
+    }
+  });
+
+  galleryInput.addEventListener("change", () => {
+    if (galleryInput.files[0]) {
+      cameraInput.value = "";
+      imageStatus.textContent = "Bildet er valgt. Trykk Lagre bruker.";
+    }
+  });
   document.getElementById("rank-up-close").addEventListener("click", closeRankCelebration);
   document.getElementById("trip-date-button").addEventListener("click", () => {
     const dateInput = document.getElementById("trip-date");
@@ -186,7 +208,9 @@ async function saveProfile(e) {
   p.name = document.getElementById("profile-name").value.trim();
   p.favoritePlayer = document.getElementById("favorite-player").value.trim();
 
-  const profileFile = document.getElementById("profile-image").files[0];
+  const cameraFile = document.getElementById("profile-camera").files[0];
+  const galleryFile = document.getElementById("profile-image").files[0];
+  const profileFile = cameraFile || galleryFile;
   const playerFile = document.getElementById("favorite-player-image").files[0];
 
   if (profileFile) p.image = await readImage(profileFile);
@@ -346,6 +370,8 @@ function renderProfileForm(p) {
   document.getElementById("profile-name").value = p.name;
   document.getElementById("favorite-player").value = p.favoritePlayer;
   document.getElementById("profile-image").value = "";
+  document.getElementById("profile-camera").value = "";
+  document.getElementById("profile-image-status").textContent = "";
   document.getElementById("favorite-player-image").value = "";
 }
 
