@@ -29,6 +29,7 @@
           <h2 id="profile-name-display">Ny bruker</h2>
           <div class="level-pill">★ NIVÅ <span id="hero-level">1</span></div>
           <strong id="hero-xp">0 XP</strong>
+          <small id="hero-rank-title" class="hero-rank-title">Nytt talent</small>
         </div>
       </div>
 
@@ -101,7 +102,7 @@
 
         <section class="skills-grid">
           <article class="skill-card motor">
-            <div class="skill-icon">⚡</div>
+            <div id="skill-motor-icons" class="skill-icon skill-icon-stack">⚡</div>
             <span>MOTOR</span>
             <strong id="skill-motor">0%</strong>
             <div class="progress-track small"><div id="skill-motor-bar" class="progress-fill"></div></div>
@@ -109,7 +110,7 @@
           </article>
 
           <article class="skill-card strength">
-            <div class="skill-icon">↯</div>
+            <div id="skill-strength-icons" class="skill-icon skill-icon-stack">↯</div>
             <span>BEINSTYRKE</span>
             <strong id="skill-strength">0%</strong>
             <div class="progress-track small"><div id="skill-strength-bar" class="progress-fill"></div></div>
@@ -117,7 +118,7 @@
           </article>
 
           <article class="skill-card balance">
-            <div class="skill-icon">↔</div>
+            <div id="skill-balance-icons" class="skill-icon skill-icon-stack">↔</div>
             <span>BALANSE</span>
             <strong id="skill-balance">0%</strong>
             <div class="progress-track small"><div id="skill-balance-bar" class="progress-fill"></div></div>
@@ -125,7 +126,7 @@
           </article>
 
           <article class="skill-card mindset">
-            <div class="skill-icon">★</div>
+            <div id="skill-mindset-icons" class="skill-icon skill-icon-stack">★</div>
             <span>VILJESTYRKE</span>
             <strong id="skill-mindset">0%</strong>
             <div class="progress-track small"><div id="skill-mindset-bar" class="progress-fill"></div></div>
@@ -134,10 +135,11 @@
         </section>
 
         <section class="card xp-card">
-          <div class="trophy">🏆</div>
+          <div id="xp-trophy" class="trophy" data-level="1">◆</div>
           <div>
             <span>TOTAL XP</span>
             <strong id="total-xp">0</strong>
+            <small id="xp-rank-title" class="xp-rank-title">Nytt talent</small>
           </div>
           <div class="xp-next">
             <span>NESTE NIVÅ</span>

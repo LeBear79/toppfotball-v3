@@ -42,16 +42,64 @@ const skillProfiles = {
 const feedbackBanks = {
   openings: [
     "Denne turen tok deg ett steg nærmere å bli",
-    "Denne turen førte deg nærmere målet om å bli",
-    "Innsatsen på denne turen hjalp deg videre mot å bli"
+    "Innsatsen din på denne turen utviklet deg videre som",
+    "I dag bygget du videre på egenskapene til",
+    "Denne turen gjorde deg litt mer klar til å bli",
+    "Arbeidet du la ned i dag førte deg nærmere rollen som",
+    "Dagens tur ga deg verdifull trening på veien mot å bli"
+  ],
+  connectors: [
+    "Det kan bli en sterk kombinasjon på fotballbanen.",
+    "Sammen er dette egenskaper som kan gjøre deg vanskelig å stoppe.",
+    "Dette er en kombinasjon mange trenere setter stor pris på.",
+    "De to egenskapene kan hjelpe deg i mange viktige situasjoner i en kamp.",
+    "Når disse utvikles sammen, kan du bidra både med kvalitet og innsats."
   ],
   endings: [
     "Alle lag trenger en slik spiller!",
     "Slike spillere betyr mye for laget!",
-    "Det er egenskaper som kan gjøre en stor forskjell på banen!",
-    "Fortsett slik – laget vil merke utviklingen din!"
+    "Fortsett slik – utviklingen vil merkes på banen!",
+    "Dette er arbeid du kan være skikkelig stolt av!",
+    "Hver tur bygger en litt bedre fotballspiller!",
+    "Det blir spennende å se hva du får til videre!",
+    "Ta med deg den samme innsatsen til neste trening!",
+    "Du er på vei i riktig retning!"
   ]
 };
+
+const feedbackTemplates = [
+  ({ opening, identities, effect1, effect2, connector, ending }) =>
+    `${opening} ${identities}. ${effect1} ${effect2} ${ending}`,
+  ({ opening, identities, effect1, effect2, connector, ending }) =>
+    `${opening} ${identities}. ${connector} ${effect1} ${effect2} ${ending}`,
+  ({ identities, effect1, effect2, connector, ending }) =>
+    `Dagens sterke sider var ${identities}. ${effect1} ${connector} ${effect2} ${ending}`,
+  ({ identities, effect1, effect2, connector, ending }) =>
+    `Du viste egenskaper som passer for ${identities}. ${effect1} ${effect2} ${connector} ${ending}`,
+  ({ opening, identities, effect1, effect2, ending }) =>
+    `${opening} ${identities}. På banen betyr det blant annet dette: ${effect1} ${effect2} ${ending}`,
+  ({ identities, effect1, effect2, ending }) =>
+    `Denne gangen utviklet du særlig det som kjennetegner ${identities}. ${effect1} ${effect2} ${ending}`
+];
+
+const skillTiers = [
+  { label: "I", min: 0, max: 10, icons: 1 },
+  { label: "II", min: 10, max: 25, icons: 2 },
+  { label: "III", min: 25, max: 45, icons: 3 },
+  { label: "ELITE", min: 45, max: 70, icons: 4 }
+];
+
+const xpRanks = [
+  { title: "Nytt talent", trophy: "◆" },
+  { title: "Lovende spiller", trophy: "◇" },
+  { title: "Kampklar", trophy: "⬟" },
+  { title: "Lagspiller", trophy: "⬢" },
+  { title: "Nøkkelspiller", trophy: "★" },
+  { title: "Stjernespiller", trophy: "✦" },
+  { title: "Toppfotballspiller", trophy: "🏆" },
+  { title: "Klubblegende", trophy: "♛" }
+];
+
 
 let appData = loadData();
 
@@ -208,24 +256,35 @@ function makeFeedback(profile, gains) {
   const [firstKey, secondKey] = strongest;
   const first = skillProfiles[firstKey];
   const second = skillProfiles[secondKey];
-  const opening = pickFresh(profile, feedbackBanks.openings, "opening");
-  const firstEffect = pickFresh(profile, first.effects, `${firstKey}-effect`);
-  const secondEffect = pickFresh(profile, second.effects, `${secondKey}-effect`);
-  const ending = pickFresh(profile, feedbackBanks.endings, "ending");
+  const opening = pickFresh(profile, feedbackBanks.openings, "opening", 3);
+  const connector = pickFresh(profile, feedbackBanks.connectors, "connector", 3);
+  const firstEffect = pickFresh(profile, first.effects, `${firstKey}-effect`, 2);
+  const secondEffect = pickFresh(profile, second.effects, `${secondKey}-effect`, 2);
+  const ending = pickFresh(profile, feedbackBanks.endings, "ending", 4);
+  const template = pickFresh(profile, feedbackTemplates, "template", 3);
+  const identities = `${first.identity} og ${second.identity}`;
 
-  return `${opening} ${first.identity} og ${second.identity}. ${firstEffect} ${secondEffect} ${ending}`;
-}
-
-function pickFresh(profile, bank, key) {
-  profile.recentFeedback ||= [];
-  const recent = profile.recentFeedback.filter(x => x.key === key).map(x => x.text);
-  const choices = bank.filter(x => !recent.includes(x));
-  const pool = choices.length ? choices : bank;
-  const text = pool[Math.floor(Math.random() * pool.length)];
-  profile.recentFeedback.push({ key, text });
-  profile.recentFeedback = profile.recentFeedback.slice(-12);
+  const text = template({ opening, identities, effect1: firstEffect, effect2: secondEffect, connector, ending });
+  profile.recentFullFeedback ||= [];
+  profile.recentFullFeedback.push(text);
+  profile.recentFullFeedback = profile.recentFullFeedback.slice(-6);
   return text;
 }
+
+function pickFresh(profile, bank, key, memorySize = 2) {
+  profile.recentFeedback ||= [];
+  const recent = profile.recentFeedback
+    .filter(x => x.key === key)
+    .slice(-memorySize)
+    .map(x => x.index);
+  const availableIndexes = bank.map((_, index) => index).filter(index => !recent.includes(index));
+  const pool = availableIndexes.length ? availableIndexes : bank.map((_, index) => index);
+  const index = pool[Math.floor(Math.random() * pool.length)];
+  profile.recentFeedback.push({ key, index });
+  profile.recentFeedback = profile.recentFeedback.slice(-40);
+  return bank[index];
+}
+
 
 function renderAll() {
   const p = activeProfile();
@@ -260,6 +319,8 @@ function renderHero(p) {
   const level = Math.floor(p.stats.xp / 500) + 1;
   document.getElementById("hero-level").textContent = level;
   document.getElementById("hero-xp").textContent = `${p.stats.xp} XP`;
+  const heroRank = xpRanks[Math.min(level - 1, xpRanks.length - 1)];
+  document.getElementById("hero-rank-title").textContent = heroRank.title;
   showImage("profile-image-display","profile-image-placeholder",p.image,initials(p.name)||"TF");
   showImage("player-image-display","player-image-placeholder",p.favoritePlayerImage,initials(p.favoritePlayer)||"10");
   showImage("feedback-player-image","feedback-player-placeholder",p.favoritePlayerImage,initials(p.favoritePlayer)||"10");
@@ -278,27 +339,42 @@ function renderProgress(p) {
   renderSkill("balance", p.stats.balance);
   renderSkill("mindset", p.stats.mindset);
 
+  const xpLevel = Math.floor(p.stats.xp / 500) + 1;
   const currentXp = p.stats.xp % 500;
   const xpPercent = Math.round(currentXp / 500 * 100);
+  const rank = xpRanks[Math.min(xpLevel - 1, xpRanks.length - 1)];
   document.getElementById("total-xp").textContent = p.stats.xp;
+  document.getElementById("xp-rank-title").textContent = rank.title;
+  document.getElementById("xp-trophy").textContent = rank.trophy;
+  document.getElementById("xp-trophy").dataset.level = String(Math.min(xpLevel, xpRanks.length));
   document.getElementById("xp-remaining").textContent = `${500-currentXp} XP igjen`;
   setBar("xp-progress", xpPercent);
 }
 
 function renderSkill(key, points) {
-  const percent = Math.min(100, points * 8);
-  document.getElementById(`skill-${key}`).textContent = `${percent}%`;
+  const tier = getSkillTier(points);
+  const progressInTier = Math.max(0, points - tier.min);
+  const tierLength = tier.max - tier.min;
+  const percent = tier.label === "ELITE" && points >= tier.max
+    ? 100
+    : Math.round((progressInTier / tierLength) * 100);
+
+  document.getElementById(`skill-${key}`).textContent = `${clamp(percent, 0, 100)}%`;
   document.getElementById(`skill-${key}-level`).textContent =
-    `${skillProfiles[key].cardName} ${identityLevel(points)}`;
+    `${skillProfiles[key].cardName} ${tier.label}`;
+  document.getElementById(`skill-${key}-icons`).textContent = getSkillIcon(key).repeat(tier.icons);
+  document.getElementById(`skill-${key}-icons`).setAttribute("aria-label", `${tier.icons} nivåsymboler`);
   setBar(`skill-${key}-bar`, percent);
 }
 
-function identityLevel(points) {
-  if (points >= 45) return "ELITE";
-  if (points >= 25) return "III";
-  if (points >= 10) return "II";
-  return "I";
+function getSkillTier(points) {
+  return skillTiers.find(tier => points < tier.max) || skillTiers[skillTiers.length - 1];
 }
+
+function getSkillIcon(key) {
+  return { motor: "⚡", strength: "↯", balance: "↔", mindset: "★" }[key];
+}
+
 
 function renderFeedback(p) {
   const latest = p.trips[0];

@@ -89,3 +89,31 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(241,
 @media(max-width:980px){.dashboard-grid{grid-template-columns:1fr}.hero-card{grid-template-columns:1fr}.hero-divider{display:none}.hero-person,.hero-person-right{justify-content:flex-start;flex-direction:row}.hero-person+.hero-person{margin-top:22px;padding-top:22px;border-top:1px solid var(--border)}}
 @media(max-width:700px){.brand-line{width:40px}.hero-image-wrap{width:105px;height:105px}.hero-person{gap:16px}.hero-person h2{font-size:1.5rem}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.profile-select-row{align-items:stretch;flex-direction:column}.profile-buttons{display:grid;grid-template-columns:1fr 1fr}.skills-grid{grid-template-columns:1fr 1fr}.xp-card{grid-template-columns:auto 1fr}.xp-next{grid-column:1/-1}.progress-track.wide{grid-column:1/-1}.feedback-layout{align-items:flex-start}.feedback-avatar{width:86px;height:86px}}
 @media(max-width:460px){.app-shell{width:min(100% - 14px,1320px)}.hero-card,.card{border-radius:18px}.hero-person{align-items:flex-start}.hero-image-wrap{width:82px;height:82px}.feedback-layout{flex-direction:column}.speech-bubble:before{display:none}.main-progress-row{grid-template-columns:58px 1fr}.round-icon{width:58px;height:58px}.progress-percent{grid-column:2}.skills-grid{grid-template-columns:1fr 1fr}.profile-buttons{grid-template-columns:1fr}.trip-item{grid-template-columns:44px 1fr}.delete-trip{grid-column:2;justify-self:start}}
+
+
+/* v0.2.2: nivåsymboler, XP-titler og troféutvikling */
+.skill-icon-stack{
+  min-height:54px;display:flex;align-items:center;justify-content:center;
+  gap:2px;letter-spacing:-5px;padding-right:5px;white-space:nowrap;
+  font-size:clamp(1.65rem,2.5vw,2.4rem)
+}
+.skill-card small{display:block;min-height:24px}
+.hero-rank-title,.xp-rank-title{
+  display:block;margin-top:5px;color:var(--gold);font-weight:800;
+  letter-spacing:.04em;text-transform:uppercase
+}
+.xp-rank-title{font-size:.88rem}
+.trophy{
+  width:78px;height:78px;border-radius:22px;display:grid;place-items:center;
+  font-size:3rem;background:linear-gradient(145deg,#274462,#102239);
+  border:1px solid #3b5f81;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.24)
+}
+.trophy[data-level="2"]{background:linear-gradient(145deg,#526171,#202c39)}
+.trophy[data-level="3"]{background:linear-gradient(145deg,#8d6228,#362713)}
+.trophy[data-level="4"]{background:linear-gradient(145deg,#b8792f,#4b2d12)}
+.trophy[data-level="5"]{background:linear-gradient(145deg,#d8ad3d,#5b4313)}
+.trophy[data-level="6"]{background:linear-gradient(145deg,#e1c456,#6b5418)}
+.trophy[data-level="7"],.trophy[data-level="8"]{
+  background:linear-gradient(145deg,#ffe16a,#7d5a12);box-shadow:0 0 28px rgba(241,197,78,.28)
+}
+@media(max-width:700px){.skill-icon-stack{font-size:1.55rem;letter-spacing:-4px}.trophy{width:64px;height:64px;font-size:2.35rem}}
