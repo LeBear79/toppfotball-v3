@@ -812,3 +812,200 @@ tbody tr:hover td {
     align-items: flex-start;
   }
 }
+
+
+/* =========================================================
+   v0.1.4 – kompakt profilkort og flere brukere
+   ========================================================= */
+
+#profile-section {
+  padding-bottom: 28px;
+}
+
+.profile-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.profile-select-group {
+  width: min(360px, 100%);
+}
+
+.profile-select-group label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.profile-toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-toolbar .button {
+  min-height: 46px;
+  padding-inline: 17px;
+}
+
+.button-secondary {
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+}
+
+.button-secondary:hover {
+  background: rgba(255,255,255,0.11);
+}
+
+.button-danger {
+  color: #ffd7d7;
+  border: 1px solid rgba(255,107,107,0.35);
+  background: rgba(255,107,107,0.08);
+}
+
+.button-danger:hover {
+  background: rgba(255,107,107,0.16);
+}
+
+.profile-showcase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 7vw, 72px);
+  width: min(620px, 100%);
+  margin: 0 auto 24px;
+  padding: 22px 28px;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(215,177,92,0.09), transparent 45%),
+    rgba(5,14,25,0.48);
+}
+
+.showcase-person {
+  display: grid;
+  justify-items: center;
+  min-width: 150px;
+  text-align: center;
+}
+
+.showcase-image-frame {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  margin-bottom: 11px;
+}
+
+.showcase-image,
+.showcase-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid rgba(242,213,138,0.7);
+  box-shadow:
+    0 14px 30px rgba(0,0,0,0.34),
+    0 0 0 6px rgba(215,177,92,0.06);
+}
+
+.showcase-image {
+  object-fit: cover;
+  object-position: center top;
+}
+
+.showcase-placeholder {
+  display: grid;
+  place-items: center;
+  color: #17130a;
+  font-size: 1.25rem;
+  font-weight: 950;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+}
+
+.showcase-role {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.showcase-person strong {
+  display: block;
+  margin-top: 3px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.showcase-divider {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--gold-light);
+  font-size: 1.45rem;
+  font-weight: 900;
+  border: 1px solid rgba(215,177,92,0.3);
+  border-radius: 50%;
+  background: rgba(215,177,92,0.08);
+}
+
+@media (max-width: 680px) {
+  .profile-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .profile-select-group {
+    width: 100%;
+  }
+
+  .profile-toolbar-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-toolbar .button {
+    width: 100%;
+  }
+
+  .profile-showcase {
+    gap: 18px;
+    padding: 20px 12px;
+  }
+
+  .showcase-person {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .showcase-image-frame {
+    width: 82px;
+    height: 82px;
+  }
+}
+
+@media (max-width: 420px) {
+  .profile-showcase {
+    gap: 10px;
+  }
+
+  .showcase-divider {
+    width: 30px;
+    height: 30px;
+    font-size: 1.1rem;
+  }
+
+  .showcase-image-frame {
+    width: 70px;
+    height: 70px;
+  }
+
+  .showcase-person strong {
+    font-size: 0.88rem;
+  }
+}

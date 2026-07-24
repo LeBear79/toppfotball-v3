@@ -1,34 +1,39 @@
 // =========================================================
-// TOPPFOTBALL v0.1.1
-// Profil, turregistrering, XP, tilbakemelding og historikk
+// TOPPFOTBALL v0.1.4
+// Flere brukere, bilder, turregistrering, XP og sletting
 // =========================================================
 
-const STORAGE_KEY = "toppfotball-v3-data";
+const STORAGE_KEY = "toppfotball-v3-multi-profile";
+const LEGACY_STORAGE_KEY = "toppfotball-v3-data";
 
-const defaultData = {
-  profile: {
-    name: "",
-    favoritePlayer: "",
-    image: "",
-    favoritePlayerImage: ""
-  },
+const emptyStats = () => ({
+  xp: 0,
+  motor: 0,
+  strength: 0,
+  balance: 0,
+  mindset: 0
+});
+
+const createProfile = (name = "") => ({
+  id: makeId(),
+  name,
+  favoritePlayer: "",
+  image: "",
+  favoritePlayerImage: "",
   trips: [],
-  stats: {
-    xp: 0,
-    motor: 0,
-    strength: 0,
-    balance: 0,
-    mindset: 0
-  }
-};
+  stats: emptyStats()
+});
 
 let appData = loadData();
 
 document.addEventListener("DOMContentLoaded", () => {
+  ensureActiveProfile();
   setDefaultDate();
-  restoreProfileForm();
+  bindEvents();
   renderAll();
+});
 
+function bindEvents() {
   document
     .getElementById("profile-form")
     .addEventListener("submit", handleProfileSubmit);
@@ -36,28 +41,80 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("trip-form")
     .addEventListener("submit", handleTripSubmit);
-});
+
+  document
+    .getElementById("profile-selector")
+    .addEventListener("change", handleProfileSwitch);
+
+  document
+    .getElementById("new-profile-button")
+    .addEventListener("click", createNewProfile);
+
+  document
+    .getElementById("delete-profile-button")
+    .addEventListener("click", deleteActiveProfile);
+}
 
 function loadData() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return structuredClone(defaultData);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed.profiles)) {
+        return parsed;
+      }
+    }
 
-    const parsed = JSON.parse(saved);
+    const legacySaved = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacySaved) {
+      const legacy = JSON.parse(legacySaved);
+      const migrated = createProfile(legacy.profile?.name || "");
+      migrated.favoritePlayer = legacy.profile?.favoritePlayer || "";
+      migrated.image = legacy.profile?.image || "";
+      migrated.favoritePlayerImage =
+        legacy.profile?.favoritePlayerImage || "";
+      migrated.trips = Array.isArray(legacy.trips) ? legacy.trips : [];
+      migrated.stats = { ...emptyStats(), ...(legacy.stats || {}) };
 
-    return {
-      profile: { ...defaultData.profile, ...(parsed.profile || {}) },
-      trips: Array.isArray(parsed.trips) ? parsed.trips : [],
-      stats: { ...defaultData.stats, ...(parsed.stats || {}) }
-    };
+      const data = {
+        activeProfileId: migrated.id,
+        profiles: [migrated]
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return data;
+    }
   } catch (error) {
     console.error("Kunne ikke lese lagrede data:", error);
-    return structuredClone(defaultData);
   }
+
+  const firstProfile = createProfile();
+  return {
+    activeProfileId: firstProfile.id,
+    profiles: [firstProfile]
+  };
 }
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+}
+
+function ensureActiveProfile() {
+  if (!Array.isArray(appData.profiles) || appData.profiles.length === 0) {
+    const profile = createProfile();
+    appData.profiles = [profile];
+    appData.activeProfileId = profile.id;
+  }
+
+  if (!appData.profiles.some((p) => p.id === appData.activeProfileId)) {
+    appData.activeProfileId = appData.profiles[0].id;
+  }
+}
+
+function getActiveProfile() {
+  return appData.profiles.find(
+    (profile) => profile.id === appData.activeProfileId
+  );
 }
 
 function setDefaultDate() {
@@ -67,19 +124,59 @@ function setDefaultDate() {
   }
 }
 
-function restoreProfileForm() {
-  document.getElementById("profile-name").value = appData.profile.name;
-  document.getElementById("favorite-player").value =
-    appData.profile.favoritePlayer;
+function handleProfileSwitch(event) {
+  appData.activeProfileId = event.target.value;
+  saveData();
+  renderAll();
+}
+
+function createNewProfile() {
+  const profile = createProfile();
+  appData.profiles.push(profile);
+  appData.activeProfileId = profile.id;
+  saveData();
+  renderAll();
+
+  document.getElementById("profile-name").focus();
+}
+
+function deleteActiveProfile() {
+  const profile = getActiveProfile();
+  if (!profile) return;
+
+  if (appData.profiles.length === 1) {
+    alert("Du må ha minst én bruker.");
+    return;
+  }
+
+  const label = profile.name || "denne brukeren";
+  const confirmed = window.confirm(
+    `Vil du slette ${label} og alle registrerte turer?`
+  );
+
+  if (!confirmed) return;
+
+  appData.profiles = appData.profiles.filter(
+    (item) => item.id !== profile.id
+  );
+  appData.activeProfileId = appData.profiles[0].id;
+  saveData();
+  renderAll();
 }
 
 function handleProfileSubmit(event) {
   event.preventDefault();
 
+  const profile = getActiveProfile();
+  if (!profile) return;
+
   const name = document.getElementById("profile-name").value.trim();
-  const favoritePlayer = document.getElementById("favorite-player").value.trim();
-  const profileImageFile = document.getElementById("profile-image").files[0];
-  const playerImageFile = document.getElementById("favorite-player-image").files[0];
+  const favoritePlayer =
+    document.getElementById("favorite-player").value.trim();
+  const profileImageFile =
+    document.getElementById("profile-image").files[0];
+  const playerImageFile =
+    document.getElementById("favorite-player-image").files[0];
 
   const readImage = (file, fallback) =>
     new Promise((resolve, reject) => {
@@ -95,25 +192,29 @@ function handleProfileSubmit(event) {
 
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error("Bildet kunne ikke leses."));
+      reader.onerror = () =>
+        reject(new Error("Bildet kunne ikke leses."));
       reader.readAsDataURL(file);
     });
 
   Promise.all([
-    readImage(profileImageFile, appData.profile.image),
-    readImage(playerImageFile, appData.profile.favoritePlayerImage)
+    readImage(profileImageFile, profile.image),
+    readImage(playerImageFile, profile.favoritePlayerImage)
   ])
     .then(([profileImage, favoritePlayerImage]) => {
-      appData.profile = {
-        name,
-        favoritePlayer,
-        image: profileImage,
-        favoritePlayerImage
-      };
+      profile.name = name;
+      profile.favoritePlayer = favoritePlayer;
+      profile.image = profileImage;
+      profile.favoritePlayerImage = favoritePlayerImage;
 
       saveData();
       renderAll();
-      showTemporaryButtonText(event.submitter, "Profil lagret", "Lagre profil");
+
+      showTemporaryButtonText(
+        event.submitter,
+        "Bruker lagret",
+        "Lagre bruker"
+      );
     })
     .catch((error) => alert(error.message));
 }
@@ -121,10 +222,11 @@ function handleProfileSubmit(event) {
 function handleTripSubmit(event) {
   event.preventDefault();
 
+  const profile = getActiveProfile();
+  if (!profile) return;
+
   const trip = {
-    id: crypto.randomUUID
-      ? crypto.randomUUID()
-      : String(Date.now()),
+    id: makeId(),
     name: document.getElementById("trip-name").value.trim(),
     date: document.getElementById("trip-date").value,
     distance: Number(document.getElementById("trip-distance").value),
@@ -154,18 +256,17 @@ function handleTripSubmit(event) {
 
   trip.gains = gains;
   trip.xp = xp;
-  trip.feedback = createFeedback(trip, gains, xp);
+  trip.feedback = createFeedback(profile, trip, gains, xp);
 
-  appData.trips.unshift(trip);
-  appData.stats.xp += xp;
-  appData.stats.motor += gains.motor;
-  appData.stats.strength += gains.strength;
-  appData.stats.balance += gains.balance;
-  appData.stats.mindset += gains.mindset;
+  profile.trips.unshift(trip);
+  profile.stats.xp += xp;
+  profile.stats.motor += gains.motor;
+  profile.stats.strength += gains.strength;
+  profile.stats.balance += gains.balance;
+  profile.stats.mindset += gains.mindset;
 
   saveData();
   renderAll();
-  renderFeedback(trip);
 
   event.target.reset();
   setDefaultDate();
@@ -176,31 +277,28 @@ function handleTripSubmit(event) {
 }
 
 function calculateGains(trip) {
-  const motor = clamp(
-    Math.round(trip.distance / 2 + trip.speed / 4),
-    1,
-    8
-  );
-
-  const strength = clamp(
-    Math.round(trip.elevation / 120 + trip.effort / 2),
-    1,
-    8
-  );
-
-  const balance = clamp(
-    Math.round(trip.elevation / 220 + (trip.newPeak ? 2 : 0)),
-    1,
-    6
-  );
-
-  const mindset = clamp(
-    Math.round(trip.effort + (trip.newPeak ? 1 : 0)),
-    1,
-    7
-  );
-
-  return { motor, strength, balance, mindset };
+  return {
+    motor: clamp(
+      Math.round(trip.distance / 2 + trip.speed / 4),
+      1,
+      8
+    ),
+    strength: clamp(
+      Math.round(trip.elevation / 120 + trip.effort / 2),
+      1,
+      8
+    ),
+    balance: clamp(
+      Math.round(trip.elevation / 220 + (trip.newPeak ? 2 : 0)),
+      1,
+      6
+    ),
+    mindset: clamp(
+      Math.round(trip.effort + (trip.newPeak ? 1 : 0)),
+      1,
+      7
+    )
+  };
 }
 
 function calculateXp(trip, gains) {
@@ -210,17 +308,19 @@ function calculateXp(trip, gains) {
     trip.effort * 7 +
     (trip.newPeak ? 20 : 0);
 
-  const developmentBonus =
-    gains.motor +
-    gains.strength +
-    gains.balance +
-    gains.mindset;
-
-  return Math.max(10, Math.round(base + developmentBonus));
+  return Math.max(
+    10,
+    Math.round(
+      base +
+        gains.motor +
+        gains.strength +
+        gains.balance +
+        gains.mindset
+    )
+  );
 }
 
-function createFeedback(trip, gains, xp) {
-  const name = appData.profile.name || "spiller";
+function createFeedback(profile, trip, gains, xp) {
   const strongestSkills = getStrongestSkills(gains);
 
   const intro =
@@ -253,22 +353,18 @@ function createFeedback(trip, gains, xp) {
 function getStrongestSkills(gains) {
   const skillInfo = {
     motor: {
-      label: "motor",
       transfer:
         "Bedre motor gjør det lettere å holde høy intensitet gjennom hele kampen, ta flere løp og fortsatt ha overskudd mot slutten."
     },
     strength: {
-      label: "beinstyrke",
       transfer:
         "Økt beinstyrke gir bedre kraft i sprint, skudd og retningsforandringer, og gjør deg sterkere i dueller."
     },
     balance: {
-      label: "balanse",
       transfer:
         "Bedre balanse hjelper deg med å holde kontroll på kroppen i vendinger, finter, taklinger og når du tar imot ballen under press."
     },
     mindset: {
-      label: "viljestyrke",
       transfer:
         "Sterkere viljestyrke gjør det lettere å fortsette å jobbe, holde konsentrasjonen og ta gode valg når du begynner å bli sliten."
     }
@@ -284,47 +380,96 @@ function getStrongestSkills(gains) {
 }
 
 function renderAll() {
+  renderProfileSelector();
+  restoreProfileForm();
   renderProfile();
   renderDashboard();
   renderHistory();
 
-  if (appData.trips.length > 0) {
-    renderFeedback(appData.trips[0]);
+  const profile = getActiveProfile();
+  if (profile.trips.length > 0) {
+    renderFeedback(profile.trips[0]);
   } else {
     renderEmptyFeedback();
   }
 }
 
+function renderProfileSelector() {
+  const selector = document.getElementById("profile-selector");
+
+  selector.innerHTML = appData.profiles
+    .map((profile, index) => {
+      const label = profile.name || `Ny bruker ${index + 1}`;
+      return `
+        <option value="${escapeHtml(profile.id)}">
+          ${escapeHtml(label)}
+        </option>
+      `;
+    })
+    .join("");
+
+  selector.value = appData.activeProfileId;
+}
+
+function restoreProfileForm() {
+  const profile = getActiveProfile();
+
+  document.getElementById("profile-name").value = profile.name;
+  document.getElementById("favorite-player").value =
+    profile.favoritePlayer;
+  document.getElementById("profile-image").value = "";
+  document.getElementById("favorite-player-image").value = "";
+}
+
 function renderProfile() {
-  const name = appData.profile.name || "";
-  const favoritePlayer = appData.profile.favoritePlayer || "";
+  const profile = getActiveProfile();
+  const name = profile.name || "";
 
   document.getElementById("welcome-heading").textContent =
     name ? `Hei, ${name}!` : "Hei!";
 
   document.getElementById("profile-summary-name").textContent =
-    name || "Ingen profil lagret";
+    name || "Ny bruker";
 
   document.getElementById("profile-summary-player").textContent =
-    favoritePlayer ? `Favorittspiller: ${favoritePlayer}` : "Velg favorittspiller";
+    profile.favoritePlayer || "Ikke valgt";
 
-  const avatar = document.getElementById("profile-avatar");
-  const placeholder = document.getElementById("profile-avatar-placeholder");
+  renderCircleImage(
+    "profile-avatar",
+    "profile-avatar-placeholder",
+    profile.image,
+    getInitials(name) || "TF"
+  );
 
-  if (appData.profile.image) {
-    avatar.src = appData.profile.image;
-    avatar.hidden = false;
+  renderCircleImage(
+    "profile-player-avatar",
+    "profile-player-placeholder",
+    profile.favoritePlayerImage,
+    profile.favoritePlayer
+      ? getInitials(profile.favoritePlayer)
+      : "10"
+  );
+}
+
+function renderCircleImage(imageId, placeholderId, source, fallback) {
+  const image = document.getElementById(imageId);
+  const placeholder = document.getElementById(placeholderId);
+
+  if (source) {
+    image.src = source;
+    image.hidden = false;
     placeholder.hidden = true;
   } else {
-    avatar.hidden = true;
+    image.hidden = true;
     placeholder.hidden = false;
-    placeholder.textContent = getInitials(name) || "TF";
+    placeholder.textContent = fallback;
   }
 }
 
 function renderDashboard() {
-  const totals = getTotals();
-  const levelInfo = getLevelInfo(appData.stats.xp);
+  const profile = getActiveProfile();
+  const totals = getTotals(profile);
+  const levelInfo = getLevelInfo(profile.stats.xp);
 
   document.getElementById("level-value").textContent =
     levelInfo.level;
@@ -333,10 +478,7 @@ function renderDashboard() {
   document.getElementById("level-progress-percent").textContent =
     `${levelInfo.percent} %`;
 
-  setProgress(
-    "level-progress-fill",
-    levelInfo.percent
-  );
+  setProgress("level-progress-fill", levelInfo.percent);
 
   const levelTrack = document.querySelector(
     '#dashboard-section [role="progressbar"]'
@@ -344,7 +486,7 @@ function renderDashboard() {
   levelTrack.setAttribute("aria-valuenow", levelInfo.percent);
 
   document.getElementById("level-progress-note").textContent =
-    appData.trips.length
+    profile.trips.length
       ? `${levelInfo.remainingXp} XP igjen til nivå ${levelInfo.level + 1}.`
       : "Registrer den første turen for å starte utviklingen.";
 
@@ -364,7 +506,6 @@ function renderDashboard() {
     "km",
     1
   );
-
   renderGoal(
     "elevation",
     totals.elevation,
@@ -372,7 +513,6 @@ function renderDashboard() {
     "hm",
     0
   );
-
   renderGoal(
     "trips",
     totals.trips,
@@ -380,7 +520,6 @@ function renderDashboard() {
     "turer",
     0
   );
-
   renderGoal(
     "peaks",
     totals.peaks,
@@ -390,8 +529,8 @@ function renderDashboard() {
   );
 }
 
-function getTotals() {
-  return appData.trips.reduce(
+function getTotals(profile) {
+  return profile.trips.reduce(
     (total, trip) => {
       total.distance += Number(trip.distance) || 0;
       total.elevation += Number(trip.elevation) || 0;
@@ -437,40 +576,36 @@ function renderGoal(prefix, value, goal, unit, decimals) {
   setProgress(`${prefix}-progress-fill`, progress);
 }
 
-function previousElevationGoal(goal) {
-  if (goal <= 100) return 0;
-  return goal - 150;
-}
-
-function goalInterval(prefix) {
-  const intervals = {
-    distance: 3,
-    trips: 2,
-    peaks: 5
-  };
-  return intervals[prefix] || 1;
-}
-
 function renderFeedback(trip) {
-  const name = appData.profile.name || "spiller";
+  const profile = getActiveProfile();
+  const name = profile.name || "spiller";
+
   document.getElementById("feedback-player").textContent =
     `Godt jobbet, ${name}!`;
-
   document.getElementById("feedback-text").textContent =
-    trip.feedback || createFeedback(trip, trip.gains, trip.xp);
+    trip.feedback ||
+    createFeedback(profile, trip, trip.gains, trip.xp);
 
-  document.getElementById("gain-motor").textContent = `+${trip.gains.motor}`;
-  document.getElementById("gain-strength").textContent = `+${trip.gains.strength}`;
-  document.getElementById("gain-balance").textContent = `+${trip.gains.balance}`;
-  document.getElementById("gain-mindset").textContent = `+${trip.gains.mindset}`;
+  document.getElementById("gain-motor").textContent =
+    `+${trip.gains.motor}`;
+  document.getElementById("gain-strength").textContent =
+    `+${trip.gains.strength}`;
+  document.getElementById("gain-balance").textContent =
+    `+${trip.gains.balance}`;
+  document.getElementById("gain-mindset").textContent =
+    `+${trip.gains.mindset}`;
 
-  renderFavoritePlayerImage();
+  renderFavoritePlayerImage(profile);
 }
 
 function renderEmptyFeedback() {
-  const name = appData.profile.name || "spiller";
+  const profile = getActiveProfile();
+  const name = profile.name || "spiller";
+
   document.getElementById("feedback-player").textContent =
-    appData.profile.name ? `Klar for første økt, ${name}?` : "Registrer profilen din først.";
+    profile.name
+      ? `Klar for første økt, ${name}?`
+      : "Registrer brukeren først.";
 
   document.getElementById("feedback-text").textContent =
     "Når du registrerer en tur, får du en tilbakemelding som forklarer hvordan treningen kan hjelpe deg på fotballbanen.";
@@ -479,18 +614,17 @@ function renderEmptyFeedback() {
     document.getElementById(`gain-${key}`).textContent = "+0";
   });
 
-  renderFavoritePlayerImage();
+  renderFavoritePlayerImage(profile);
 }
 
-function renderFavoritePlayerImage() {
+function renderFavoritePlayerImage(profile) {
   const wrap = document.getElementById("feedback-image-wrap");
   const image = document.getElementById("feedback-player-image");
-  const imageData = appData.profile.favoritePlayerImage;
 
-  if (imageData) {
-    image.src = imageData;
-    image.alt = appData.profile.favoritePlayer
-      ? `Bilde av ${appData.profile.favoritePlayer}`
+  if (profile.favoritePlayerImage) {
+    image.src = profile.favoritePlayerImage;
+    image.alt = profile.favoritePlayer
+      ? `Bilde av ${profile.favoritePlayer}`
       : "Bilde av favorittspiller";
     wrap.hidden = false;
   } else {
@@ -500,9 +634,10 @@ function renderFavoritePlayerImage() {
 }
 
 function renderHistory() {
+  const profile = getActiveProfile();
   const body = document.getElementById("trip-history-body");
 
-  if (appData.trips.length === 0) {
+  if (profile.trips.length === 0) {
     body.innerHTML = `
       <tr>
         <td colspan="7">Ingen turer registrert ennå.</td>
@@ -511,7 +646,7 @@ function renderHistory() {
     return;
   }
 
-  body.innerHTML = appData.trips
+  body.innerHTML = profile.trips
     .map(
       (trip) => `
         <tr>
@@ -536,39 +671,46 @@ function renderHistory() {
     .join("");
 
   body.querySelectorAll(".delete-trip-button").forEach((button) => {
-    button.addEventListener("click", () => deleteTrip(button.dataset.tripId));
+    button.addEventListener("click", () =>
+      deleteTrip(button.dataset.tripId)
+    );
   });
 }
 
 function deleteTrip(tripId) {
-  const trip = appData.trips.find((item) => item.id === tripId);
+  const profile = getActiveProfile();
+  const trip = profile.trips.find((item) => item.id === tripId);
   if (!trip) return;
 
-  const confirmed = window.confirm(`Vil du slette turen "${trip.name}"?`);
+  const confirmed = window.confirm(
+    `Vil du slette turen "${trip.name}"?`
+  );
   if (!confirmed) return;
 
-  appData.trips = appData.trips.filter((item) => item.id !== tripId);
-  recalculateStats();
+  profile.trips = profile.trips.filter(
+    (item) => item.id !== tripId
+  );
+  recalculateStats(profile);
   saveData();
   renderAll();
 }
 
-function recalculateStats() {
-  appData.stats = {
-    xp: 0,
-    motor: 0,
-    strength: 0,
-    balance: 0,
-    mindset: 0
-  };
+function recalculateStats(profile) {
+  profile.stats = emptyStats();
 
-  appData.trips.forEach((trip) => {
-    appData.stats.xp += Number(trip.xp) || 0;
-    appData.stats.motor += Number(trip.gains?.motor) || 0;
-    appData.stats.strength += Number(trip.gains?.strength) || 0;
-    appData.stats.balance += Number(trip.gains?.balance) || 0;
-    appData.stats.mindset += Number(trip.gains?.mindset) || 0;
+  profile.trips.forEach((trip) => {
+    profile.stats.xp += Number(trip.xp) || 0;
+    profile.stats.motor += Number(trip.gains?.motor) || 0;
+    profile.stats.strength += Number(trip.gains?.strength) || 0;
+    profile.stats.balance += Number(trip.gains?.balance) || 0;
+    profile.stats.mindset += Number(trip.gains?.mindset) || 0;
   });
+}
+
+function setProgress(id, value) {
+  const element = document.getElementById(id);
+  element.style.width =
+    `${clamp(Number(value) || 0, 0, 100)}%`;
 }
 
 function getInitials(name) {
@@ -579,11 +721,6 @@ function getInitials(name) {
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
-}
-
-function setProgress(id, value) {
-  const element = document.getElementById(id);
-  element.style.width = `${clamp(Number(value) || 0, 0, 100)}%`;
 }
 
 function formatNumber(value, decimals = 0) {
@@ -604,6 +741,12 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function makeId() {
+  return globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -613,7 +756,11 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function showTemporaryButtonText(button, temporaryText, normalText) {
+function showTemporaryButtonText(
+  button,
+  temporaryText,
+  normalText
+) {
   if (!button) return;
 
   button.textContent = temporaryText;

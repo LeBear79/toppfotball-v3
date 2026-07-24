@@ -33,15 +33,43 @@
         </div>
       </div>
 
-      <div class="profile-summary">
-        <div class="profile-avatar-wrap">
-          <img id="profile-avatar" class="profile-avatar" alt="Profilbilde" hidden>
-          <div id="profile-avatar-placeholder" class="profile-avatar-placeholder">TF</div>
+      <div class="profile-toolbar">
+        <div class="profile-select-group">
+          <label for="profile-selector">Velg bruker</label>
+          <select id="profile-selector" aria-label="Velg bruker"></select>
         </div>
-        <div>
-          <p class="profile-summary-label">AKTIV PROFIL</p>
+
+        <div class="profile-toolbar-actions">
+          <button type="button" class="button button-secondary" id="new-profile-button">
+            Ny bruker
+          </button>
+          <button type="button" class="button button-danger" id="delete-profile-button">
+            Slett bruker
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-showcase">
+        <div class="showcase-person">
+          <div class="showcase-image-frame">
+            <img id="profile-avatar" class="showcase-image" alt="Profilbilde" hidden>
+            <div id="profile-avatar-placeholder" class="showcase-placeholder">TF</div>
+          </div>
+          <span class="showcase-role">Bruker</span>
           <strong id="profile-summary-name">Ingen profil lagret</strong>
-          <span id="profile-summary-player">Velg favorittspiller</span>
+        </div>
+
+        <div class="showcase-divider" aria-hidden="true">
+          <span>+</span>
+        </div>
+
+        <div class="showcase-person">
+          <div class="showcase-image-frame">
+            <img id="profile-player-avatar" class="showcase-image" alt="Favorittspiller" hidden>
+            <div id="profile-player-placeholder" class="showcase-placeholder">10</div>
+          </div>
+          <span class="showcase-role">Favorittspiller</span>
+          <strong id="profile-summary-player">Ikke valgt</strong>
         </div>
       </div>
 
@@ -63,7 +91,7 @@
         </div>
 
         <div class="form-actions form-group-wide">
-          <button type="submit" class="button button-primary">Lagre profil</button>
+          <button type="submit" class="button button-primary">Lagre bruker</button>
         </div>
       </form>
     </section>
