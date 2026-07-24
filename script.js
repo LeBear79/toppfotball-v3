@@ -102,14 +102,6 @@ const xpRanks = [
 ];
 
 
-const playerTypes = [
-  { keys: ["motor", "balance"], title: "Energisk kantspiller", icon: "➤", description: "Du bygger utholdenhet og balanse som kan hjelpe deg med raske løp, vendinger og innlegg langs kanten." },
-  { keys: ["strength", "mindset"], title: "Kraftfull spiss", icon: "◆", description: "Du utvikler kraft og vilje som kan gjøre deg farlig foran mål og tøff i duellene." },
-  { keys: ["balance", "mindset"], title: "Kreativ playmaker", icon: "✦", description: "Du trener kroppskontroll og viljestyrke som kan hjelpe deg å holde på ballen og finne gode løsninger under press." },
-  { keys: ["motor", "mindset"], title: "Ustoppelig midtbanespiller", icon: "⚡", description: "Du bygger motor og kampvilje som kan gjøre deg nyttig i både angrep og forsvar gjennom hele kampen." },
-  { keys: ["strength", "balance"], title: "Komplett angriper", icon: "★", description: "Du utvikler både kraft og kontroll – en kombinasjon som kan gi raske vendinger, sterke løp og gode avslutninger." },
-  { keys: ["motor", "strength"], title: "Bunnsolid forsvarer", icon: "⬟", description: "Du bygger løpskraft og sterke bein som kan hjelpe deg med å følge motspillere og stå støtt i viktige dueller." }
-];
 
 let appData = loadData();
 
@@ -337,7 +329,6 @@ function renderAll() {
   renderProfileForm(p);
   renderHero(p);
   renderProgress(p);
-  renderPlayerType(p);
   renderFeedback(p);
   renderTrips(p);
   maybeShowRankCelebration(p);
@@ -462,28 +453,6 @@ function closeRankCelebration() {
   const overlay = document.getElementById("rank-up-overlay");
   overlay.classList.remove("show");
   window.setTimeout(() => { overlay.hidden = true; }, 250);
-}
-
-function renderPlayerType(p) {
-  const stats = p.stats || {};
-  const ranked = ["motor", "strength", "balance", "mindset"]
-    .sort((a, b) => (stats[b] || 0) - (stats[a] || 0));
-
-  const hasProgress = ranked.some(key => (stats[key] || 0) > 0);
-  let type = {
-    title: "Allsidig lagspiller",
-    icon: "⚽",
-    description: "Registrer flere turer for å se hvilken spillertype du utvikler deg til."
-  };
-
-  if (hasProgress) {
-    const topTwo = ranked.slice(0, 2);
-    type = playerTypes.find(item => item.keys.every(key => topTwo.includes(key))) || type;
-  }
-
-  document.getElementById("player-type-icon").textContent = type.icon;
-  document.getElementById("player-type-title").textContent = type.title;
-  document.getElementById("player-type-description").textContent = type.description;
 }
 
 function renderFeedback(p) {
