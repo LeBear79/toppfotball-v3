@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Toppfotball</title>
   <meta name="description" content="Toppfotball gjør turer motiverende med fotballinspirert utvikling.">
-  <link rel="stylesheet" href="style.css?v=0.2.5">
+  <link rel="stylesheet" href="style.css?v=0.2.6">
 </head>
 <body>
   <header class="topbar">
@@ -52,7 +52,10 @@
       <div class="profile-select-row">
         <div>
           <label for="profile-selector">Velg bruker</label>
-          <select id="profile-selector"></select>
+          <div class="control-with-icon select-control">
+              <select id="profile-selector"></select>
+              <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+            </div>
         </div>
         <div class="profile-buttons">
           <button id="new-profile-button" class="button secondary" type="button">Ny bruker</button>
@@ -148,6 +151,15 @@
           </div>
           <div class="progress-track wide"><div id="xp-progress" class="progress-fill gold"></div></div>
         </section>
+
+        <section class="card player-type-card">
+          <div class="player-type-icon" id="player-type-icon" aria-hidden="true">⚽</div>
+          <div>
+            <span class="player-type-kicker">DIN SPILLERTYPE</span>
+            <h3 id="player-type-title">Allsidig lagspiller</h3>
+            <p id="player-type-description">Registrer flere turer for å se hvilken spillertype du utvikler deg til.</p>
+          </div>
+        </section>
       </div>
 
       <div class="right-column">
@@ -178,7 +190,12 @@
             </div>
             <div class="field">
               <label for="trip-date">Dato</label>
-              <input id="trip-date" type="date" required>
+              <div class="control-with-icon date-control">
+                <input id="trip-date" type="date" required>
+                <button id="trip-date-button" class="control-icon-button" type="button" aria-label="Åpne kalender">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v3M17 2v3M3.5 9h17M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v14A1.5 1.5 0 0 1 19 21.5H5A1.5 1.5 0 0 1 3.5 20V6A1.5 1.5 0 0 1 5 4.5Z"/></svg>
+                </button>
+              </div>
             </div>
             <div class="field">
               <label for="trip-distance">Kilometer</label>
@@ -194,6 +211,7 @@
             </div>
             <div class="field">
               <label for="trip-effort">Innsats</label>
+              <div class="control-with-icon select-control">
               <select id="trip-effort">
                 <option value="1">1 – Veldig lett</option>
                 <option value="2">2 – Lett</option>
@@ -201,13 +219,18 @@
                 <option value="4">4 – Hard</option>
                 <option value="5">5 – Maks innsats</option>
               </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+            </div>
             </div>
             <div class="field">
               <label for="trip-new-peak">Ny topp?</label>
+              <div class="control-with-icon select-control">
               <select id="trip-new-peak">
                 <option value="nei">Nei</option>
                 <option value="ja">Ja</option>
               </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+            </div>
             </div>
             <div class="field full">
               <button class="button primary" type="submit">Registrer tur</button>
@@ -225,7 +248,7 @@
     </section>
   </main>
 
-  <script src="script.js?v=0.2.5"></script>
+  <script src="script.js?v=0.2.6"></script>
 
   <div id="rank-up-overlay" class="rank-up-overlay" hidden>
     <div class="rank-up-card" role="dialog" aria-modal="true" aria-labelledby="rank-up-heading">
