@@ -1,43 +1,55 @@
 const STORAGE_KEY = "toppfotball-v2";
 
+const skillProfiles = {
+  motor: {
+    identity: "lagets motor",
+    cardName: "Lagets motor",
+    effects: [
+      "En sterk motor gjør at du kan ta flere løp og fortsatt ha krefter igjen når kampen skal avgjøres.",
+      "God utholdenhet hjelper deg å jobbe både i angrep og forsvar gjennom hele kampen.",
+      "Når motoren blir bedre, kan du holde farten oppe lenger og hjelpe laget i flere situasjoner."
+    ]
+  },
+  strength: {
+    identity: "en storskytter",
+    cardName: "Storskytter",
+    effects: [
+      "Sterke bein kan gjøre deg raskere, gi deg hardere skudd og mer kraft i duellene.",
+      "Beinstyrke hjelper deg i spurter, hopp og når du skal stå imot en motspiller.",
+      "Mer kraft i beina kan gi bedre akselerasjon og gjøre skuddene dine vanskeligere å stoppe."
+    ]
+  },
+  balance: {
+    identity: "en ballmester",
+    cardName: "Ballmester",
+    effects: [
+      "God balanse gjør det lettere å vende raskt, finte og beholde kontrollen på ballen.",
+      "Bedre kroppskontroll hjelper deg å holde deg på beina når du blir presset av en motspiller.",
+      "Balansen gjør det lettere å ta imot ballen og skifte retning uten å miste kontrollen."
+    ]
+  },
+  mindset: {
+    identity: "lagets kriger",
+    cardName: "Lagets kriger",
+    effects: [
+      "Viljestyrken gjør deg tøffere, slik at du kan jobbe lengre og hardere for å hjelpe laget til seier.",
+      "Sterk vilje hjelper deg å fortsette å kjempe selv når du blir sliten eller kampen blir vanskelig.",
+      "Når du ikke gir opp, kan du vinne tilbake ballen og løfte lagkameratene dine helt til kampen er over."
+    ]
+  }
+};
+
 const feedbackBanks = {
-  intros: [
-    "Sterk tur!",
-    "Dette var skikkelig bra!",
-    "Du ga deg ikke!",
-    "Herlig innsats!",
-    "For en fin økt!",
-    "Du jobbet som en lagspiller!",
-    "Dette var en tur med fart i!",
-    "Du tok et nytt steg i dag!"
-  ],
-  motor: [
-    "Motoren din fikk en skikkelig boost. Det hjelper deg å løpe mer i kamp og fortsatt ha krefter igjen.",
-    "Du trente opp motoren. Da blir det lettere å ta mange løp og følge motspilleren helt hjem.",
-    "Denne turen gjorde kondisen bedre. Det er gull når kampen varer lenge."
-  ],
-  strength: [
-    "Beina ble sterkere. Det hjelper deg i skudd, spurter og tøffe dueller.",
-    "Du bygde beinstyrke. Det gjør det lettere å skyte hardt og komme raskt i gang.",
-    "Sterkere bein gjør deg bedre rustet til å stå imot når du kjemper om ballen."
-  ],
-  balance: [
-    "Balansen ble bedre. Det hjelper deg når du finter, vender og tar imot ballen.",
-    "Du trente kroppen på å holde seg stødig. Det er nyttig når du blir presset av en motspiller.",
-    "Bedre balanse gjør det lettere å ha kontroll på ballen når du skifter retning."
-  ],
-  mindset: [
-    "Viljestyrken vokste. Det hjelper deg å fortsette selv når du blir sliten.",
-    "Du trente hodet på å ikke gi opp. Det er akkurat det gode lagspillere gjør.",
-    "Denne turen gjorde deg tøffere. Det kan hjelpe deg å holde fokus helt til dommeren blåser av."
+  openings: [
+    "Denne turen tok deg ett steg nærmere å bli",
+    "Denne turen førte deg nærmere målet om å bli",
+    "Innsatsen på denne turen hjalp deg videre mot å bli"
   ],
   endings: [
-    "Fortsett sånn!",
-    "Dette lover bra!",
-    "Du blir bedre for hver tur!",
-    "Bra jobbet!",
-    "Neste nivå er nærmere nå!",
-    "Dette kan du være stolt av!"
+    "Alle lag trenger en slik spiller!",
+    "Slike spillere betyr mye for laget!",
+    "Det er egenskaper som kan gjøre en stor forskjell på banen!",
+    "Fortsett slik – laget vil merke utviklingen din!"
   ]
 };
 
@@ -188,11 +200,20 @@ function saveTrip(e) {
 }
 
 function makeFeedback(profile, gains) {
-  const strongest = Object.entries(gains).sort((a,b)=>b[1]-a[1])[0][0];
-  const intro = pickFresh(profile, feedbackBanks.intros, "intro");
-  const body = pickFresh(profile, feedbackBanks[strongest], strongest);
+  const strongest = Object.entries(gains)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([key]) => key);
+
+  const [firstKey, secondKey] = strongest;
+  const first = skillProfiles[firstKey];
+  const second = skillProfiles[secondKey];
+  const opening = pickFresh(profile, feedbackBanks.openings, "opening");
+  const firstEffect = pickFresh(profile, first.effects, `${firstKey}-effect`);
+  const secondEffect = pickFresh(profile, second.effects, `${secondKey}-effect`);
   const ending = pickFresh(profile, feedbackBanks.endings, "ending");
-  return `${intro} ${body} ${ending}`;
+
+  return `${opening} ${first.identity} og ${second.identity}. ${firstEffect} ${secondEffect} ${ending}`;
 }
 
 function pickFresh(profile, bank, key) {
@@ -266,10 +287,17 @@ function renderProgress(p) {
 
 function renderSkill(key, points) {
   const percent = Math.min(100, points * 8);
-  const level = Math.floor(points / 10) + 1;
   document.getElementById(`skill-${key}`).textContent = `${percent}%`;
-  document.getElementById(`skill-${key}-level`).textContent = `NIVÅ ${level}`;
+  document.getElementById(`skill-${key}-level`).textContent =
+    `${skillProfiles[key].cardName} ${identityLevel(points)}`;
   setBar(`skill-${key}-bar`, percent);
+}
+
+function identityLevel(points) {
+  if (points >= 45) return "ELITE";
+  if (points >= 25) return "III";
+  if (points >= 10) return "II";
+  return "I";
 }
 
 function renderFeedback(p) {
