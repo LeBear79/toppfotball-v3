@@ -186,3 +186,14 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(241,
 .rank-up-card h2 { margin: .4rem 0; font-size: 2rem; }
 .rank-up-card strong { display: block; color: #f7c845; font-size: 1.55rem; }
 .rank-up-card > span:last-of-type { display: block; margin: .4rem 0 1.5rem; color: #b8c9dc; }
+
+/* Hvitt kalenderikon i datofeltet */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  opacity: 1;
+  cursor: pointer;
+}
