@@ -227,3 +227,11 @@ select{-webkit-appearance:none;appearance:none}
 .visually-hidden-file{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .image-status{min-height:1.2em;margin:8px 0 0;color:var(--muted,#aeb9c9);font-size:.88rem}
 @media(max-width:460px){.profile-image-actions{grid-template-columns:1fr}}
+
+
+/* Sikkerhetskopi */
+.backup-card{margin-bottom:18px;padding:22px}
+.backup-description{margin:0 0 16px;color:var(--muted);line-height:1.55;max-width:780px}
+.backup-actions{display:flex;flex-wrap:wrap;gap:10px}
+.backup-actions .button{min-width:210px}
+@media(max-width:460px){.backup-actions{display:grid;grid-template-columns:1fr}.backup-actions .button{width:100%;min-width:0}}

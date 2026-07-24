@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Toppfotball</title>
   <meta name="description" content="Toppfotball gjør turer motiverende med fotballinspirert utvikling.">
-  <link rel="stylesheet" href="style.css?v=0.3.0">
+  <link rel="stylesheet" href="style.css?v=0.3.2">
 </head>
 <body>
   <header class="topbar">
@@ -90,6 +90,19 @@
           <button class="button primary" type="submit">Lagre bruker</button>
         </div>
       </form>
+    </section>
+
+    <section class="card backup-card">
+      <div class="section-title-row">
+        <h3>SIKKERHETSKOPI</h3>
+      </div>
+      <p class="backup-description">Lagre en kopi av alle brukere, bilder, turer, XP og nivåer. Filen kan brukes til å gjenopprette appen på samme eller en ny enhet.</p>
+      <div class="backup-actions">
+        <button id="export-backup-button" class="button secondary" type="button">Sikkerhetskopier data</button>
+        <label class="button secondary file-picker-button" for="import-backup-input">Gjenopprett data</label>
+        <input id="import-backup-input" class="visually-hidden-file" type="file" accept="application/json,.json">
+      </div>
+      <p id="backup-status" class="image-status" aria-live="polite"></p>
     </section>
 
     <section class="dashboard-grid">
@@ -247,7 +260,7 @@
     </section>
   </main>
 
-  <script src="script.js?v=0.3.0"></script>
+  <script src="script.js?v=0.3.2"></script>
 
   <div id="rank-up-overlay" class="rank-up-overlay" hidden>
     <div class="rank-up-card" role="dialog" aria-modal="true" aria-labelledby="rank-up-heading">

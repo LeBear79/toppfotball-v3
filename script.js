@@ -1,5 +1,5 @@
 const STORAGE_KEY = "toppfotball-v2";
-const APP_VERSION = "0.2.8";
+const APP_VERSION = "0.3.2";
 
 const skillProfiles = {
   motor: {
@@ -105,11 +105,12 @@ const xpRanks = [
 
 let appData = loadData();
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   ensureProfile();
   bindEvents();
   setDefaultDate();
   renderAll();
+  await optimizeStoredImages();
 });
 
 function createProfile(name = "") {
@@ -134,8 +135,17 @@ function loadData() {
   return { activeProfileId: profile.id, profiles: [profile] };
 }
 
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+function saveData(showError = true) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    return true;
+  } catch (error) {
+    console.error("Kunne ikke lagre Toppfotball-data:", error);
+    if (showError) {
+      alert("Det er ikke nok lagringsplass i nettleseren. Bildene blir nå gjort mindre. Prøv å lagre én gang til.");
+    }
+    return false;
+  }
 }
 
 function ensureProfile() {
@@ -160,15 +170,24 @@ function bindEvents() {
     saveData();
     renderAll();
   });
-  document.getElementById("new-profile-button").addEventListener("click", () => {
+  document.getElementById("new-profile-button").addEventListener("click", async () => {
+    await optimizeStoredImages();
+    const previousActiveId = appData.activeProfileId;
     const p = createProfile();
     appData.profiles.push(p);
     appData.activeProfileId = p.id;
-    saveData();
+    if (!saveData()) {
+      appData.profiles = appData.profiles.filter(profile => profile.id !== p.id);
+      appData.activeProfileId = previousActiveId;
+      renderAll();
+      return;
+    }
     renderAll();
     document.getElementById("profile-name").focus();
   });
   document.getElementById("delete-profile-button").addEventListener("click", deleteProfile);
+  document.getElementById("export-backup-button").addEventListener("click", exportBackup);
+  document.getElementById("import-backup-input").addEventListener("change", importBackup);
 
   const cameraInput = document.getElementById("profile-camera");
   const galleryInput = document.getElementById("profile-image");
@@ -202,6 +221,104 @@ function bindEvents() {
   });
 }
 
+function exportBackup() {
+  const status = document.getElementById("backup-status");
+  try {
+    const backup = {
+      app: "Toppfotball",
+      version: APP_VERSION,
+      exportedAt: new Date().toISOString(),
+      storageKey: STORAGE_KEY,
+      data: appData
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `Toppfotball-backup-${date}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    status.textContent = "Sikkerhetskopien er laget. Lagre filen på et trygt sted.";
+  } catch (error) {
+    console.error("Kunne ikke lage sikkerhetskopi:", error);
+    status.textContent = "Sikkerhetskopien kunne ikke lages.";
+  }
+}
+
+async function importBackup(event) {
+  const input = event.target;
+  const status = document.getElementById("backup-status");
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const importedData = parsed?.data ?? parsed;
+
+    if (!isValidBackupData(importedData)) {
+      throw new Error("Filen inneholder ikke gyldige Toppfotball-data.");
+    }
+
+    const profileCount = importedData.profiles.length;
+    const tripCount = importedData.profiles.reduce((sum, profile) => sum + (profile.trips?.length || 0), 0);
+    const confirmed = confirm(
+      `Vil du gjenopprette ${profileCount} bruker${profileCount === 1 ? "" : "e"} og ${tripCount} tur${tripCount === 1 ? "" : "er"}? Dagens data i appen blir erstattet.`
+    );
+    if (!confirmed) {
+      status.textContent = "Gjenopprettingen ble avbrutt.";
+      return;
+    }
+
+    const previousData = appData;
+    appData = normalizeImportedData(importedData);
+    ensureProfile();
+    if (!saveData(false)) {
+      appData = previousData;
+      throw new Error("Det var ikke nok lagringsplass til sikkerhetskopien.");
+    }
+
+    renderAll();
+    status.textContent = "Dataene er gjenopprettet.";
+  } catch (error) {
+    console.error("Kunne ikke gjenopprette sikkerhetskopi:", error);
+    alert(error.message || "Sikkerhetskopien kunne ikke leses.");
+    status.textContent = "Gjenopprettingen mislyktes.";
+  } finally {
+    input.value = "";
+  }
+}
+
+function isValidBackupData(data) {
+  return Boolean(
+    data &&
+    Array.isArray(data.profiles) &&
+    data.profiles.every(profile => profile && typeof profile === "object" && Array.isArray(profile.trips || []))
+  );
+}
+
+function normalizeImportedData(data) {
+  const profiles = data.profiles.map(profile => ({
+    ...createProfile(profile.name || ""),
+    ...profile,
+    id: profile.id || makeId(),
+    trips: Array.isArray(profile.trips) ? profile.trips : [],
+    stats: profile.stats && typeof profile.stats === "object"
+      ? { xp: 0, motor: 0, strength: 0, balance: 0, mindset: 0, ...profile.stats }
+      : { xp: 0, motor: 0, strength: 0, balance: 0, mindset: 0 },
+    recentFeedback: Array.isArray(profile.recentFeedback) ? profile.recentFeedback : []
+  }));
+
+  const activeProfileId = profiles.some(profile => profile.id === data.activeProfileId)
+    ? data.activeProfileId
+    : profiles[0]?.id;
+
+  return { ...data, profiles, activeProfileId };
+}
+
 async function saveProfile(e) {
   e.preventDefault();
   const p = activeProfile();
@@ -213,20 +330,96 @@ async function saveProfile(e) {
   const profileFile = cameraFile || galleryFile;
   const playerFile = document.getElementById("favorite-player-image").files[0];
 
-  if (profileFile) p.image = await readImage(profileFile);
-  if (playerFile) p.favoritePlayerImage = await readImage(playerFile);
+  const oldImage = p.image;
+  const oldPlayerImage = p.favoritePlayerImage;
 
-  saveData();
-  renderAll();
+  try {
+    if (profileFile) p.image = await compressImageFile(profileFile);
+    if (playerFile) p.favoritePlayerImage = await compressImageFile(playerFile);
+
+    if (!saveData()) {
+      p.image = oldImage;
+      p.favoritePlayerImage = oldPlayerImage;
+      return;
+    }
+
+    document.getElementById("profile-image-status").textContent = "Brukeren er lagret.";
+    renderAll();
+  } catch (error) {
+    console.error("Kunne ikke behandle bildet:", error);
+    p.image = oldImage;
+    p.favoritePlayerImage = oldPlayerImage;
+    alert("Bildet kunne ikke behandles. Prøv et annet bilde.");
+  }
 }
 
-function readImage(file) {
+function compressImageFile(file, maxSize = 480, quality = 0.72) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+    reader.onerror = () => reject(reader.error || new Error("Kunne ikke lese bildet."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Kunne ikke åpne bildet."));
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const width = Math.max(1, Math.round(img.width * scale));
+        const height = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
     reader.readAsDataURL(file);
   });
+}
+
+function compressDataUrl(dataUrl, maxSize = 480, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    if (!dataUrl || !dataUrl.startsWith("data:image/")) {
+      resolve(dataUrl);
+      return;
+    }
+    const img = new Image();
+    img.onerror = () => reject(new Error("Kunne ikke optimalisere lagret bilde."));
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const width = Math.max(1, Math.round(img.width * scale));
+      const height = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL("image/jpeg", quality);
+      resolve(compressed.length < dataUrl.length ? compressed : dataUrl);
+    };
+    img.src = dataUrl;
+  });
+}
+
+async function optimizeStoredImages() {
+  let changed = false;
+  try {
+    for (const profile of appData.profiles || []) {
+      for (const key of ["image", "favoritePlayerImage"]) {
+        const original = profile[key];
+        if (original && original.length > 180000) {
+          const optimized = await compressDataUrl(original);
+          if (optimized !== original) {
+            profile[key] = optimized;
+            changed = true;
+          }
+        }
+      }
+    }
+    if (changed) saveData(false);
+  } catch (error) {
+    console.warn("Optimalisering av gamle bilder ble hoppet over:", error);
+  }
 }
 
 function deleteProfile() {
