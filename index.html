@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Toppfotball</title>
+  <meta
+    name="description"
+    content="Toppfotball gjør turer motiverende ved å koble aktivitet til fotballrelatert utvikling."
+  >
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <p class="eyebrow">TUR. UTVIKLING. MOTIVASJON.</p>
+      <h1>TOPPFOTBALL</h1>
+      <p class="tagline">Veien til toppen starter her.</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="panel" id="profile-section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">PROFIL</p>
+          <h2>Din profil</h2>
+        </div>
+      </div>
+
+      <form id="profile-form" class="form-grid">
+        <div class="form-group">
+          <label for="profile-name">Navn</label>
+          <input id="profile-name" name="profileName" type="text" placeholder="Skriv inn navnet ditt" autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label for="favorite-player">Favorittspiller</label>
+          <input id="favorite-player" name="favoritePlayer" type="text" placeholder="For eksempel Mbappé">
+        </div>
+
+        <div class="form-group form-group-wide">
+          <label for="profile-image">Profilbilde</label>
+          <input id="profile-image" name="profileImage" type="file" accept="image/*">
+          <p class="helper-text">Bildet lagres lokalt på enheten.</p>
+        </div>
+
+        <div class="form-actions form-group-wide">
+          <button type="submit" class="button button-primary">Lagre profil</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" id="dashboard-section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">OVERSIKT</p>
+          <h2 id="welcome-heading">Hei!</h2>
+        </div>
+
+        <div class="level-box">
+          <span class="level-label">Nivå</span>
+          <strong id="level-value">1</strong>
+        </div>
+      </div>
+
+      <div class="level-progress">
+        <div class="progress-meta">
+          <span id="level-progress-text">0 av 500 XP</span>
+          <span id="level-progress-percent">0 %</span>
+        </div>
+
+        <div class="progress-track" role="progressbar" aria-label="Fremdrift til neste nivå" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-fill" id="level-progress-fill"></div>
+        </div>
+
+        <p class="progress-note" id="level-progress-note">Registrer den første turen for å starte utviklingen.</p>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric-card">
+          <p class="metric-title">Distanse</p>
+          <strong class="metric-value" id="total-distance">0,0 km</strong>
+          <p class="metric-next" id="distance-next">Neste mål: 3 km</p>
+          <div class="progress-track progress-track-small"><div class="progress-fill" id="distance-progress-fill"></div></div>
+        </article>
+
+        <article class="metric-card">
+          <p class="metric-title">Høydemeter</p>
+          <strong class="metric-value" id="total-elevation">0 hm</strong>
+          <p class="metric-next" id="elevation-next">Neste mål: 100 hm</p>
+          <div class="progress-track progress-track-small"><div class="progress-fill" id="elevation-progress-fill"></div></div>
+        </article>
+
+        <article class="metric-card">
+          <p class="metric-title">Turer</p>
+          <strong class="metric-value" id="total-trips">0</strong>
+          <p class="metric-next" id="trips-next">Neste mål: 2 turer</p>
+          <div class="progress-track progress-track-small"><div class="progress-fill" id="trips-progress-fill"></div></div>
+        </article>
+
+        <article class="metric-card">
+          <p class="metric-title">Topper</p>
+          <strong class="metric-value" id="total-peaks">0</strong>
+          <p class="metric-next" id="peaks-next">Neste mål: 5 topper</p>
+          <div class="progress-track progress-track-small"><div class="progress-fill" id="peaks-progress-fill"></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="trip-section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">NY AKTIVITET</p>
+          <h2>Registrer tur</h2>
+        </div>
+      </div>
+
+      <form id="trip-form" class="form-grid">
+        <div class="form-group form-group-wide">
+          <label for="trip-name">Navn på turen</label>
+          <input id="trip-name" name="tripName" type="text" placeholder="For eksempel Kolsåstoppen" required>
+        </div>
+
+        <div class="form-group">
+          <label for="trip-date">Dato</label>
+          <input id="trip-date" name="tripDate" type="date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="trip-distance">Lengde i kilometer</label>
+          <input id="trip-distance" name="tripDistance" type="number" min="0.1" step="0.1" placeholder="3,2" required>
+        </div>
+
+        <div class="form-group">
+          <label for="trip-elevation">Høydemeter</label>
+          <input id="trip-elevation" name="tripElevation" type="number" min="0" step="1" placeholder="150" required>
+        </div>
+
+        <div class="form-group">
+          <label for="trip-speed">Gjennomsnittsfart i km/t</label>
+          <input id="trip-speed" name="tripSpeed" type="number" min="0.1" step="0.1" placeholder="3,5" required>
+        </div>
+
+        <div class="form-group">
+          <label for="trip-effort">Innsats</label>
+          <select id="trip-effort" name="tripEffort">
+            <option value="1">1 – Veldig lett</option>
+            <option value="2">2 – Lett</option>
+            <option value="3" selected>3 – Passe</option>
+            <option value="4">4 – Hard</option>
+            <option value="5">5 – Maks innsats</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="trip-new-peak">Ny topp?</label>
+          <select id="trip-new-peak" name="tripNewPeak">
+            <option value="nei">Nei</option>
+            <option value="ja">Ja</option>
+          </select>
+        </div>
+
+        <div class="form-actions form-group-wide">
+          <button type="submit" class="button button-primary">Registrer tur</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" id="feedback-section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">TILBAKEMELDING</p>
+          <h2 id="feedback-heading">Favorittspillerens analyse</h2>
+        </div>
+      </div>
+
+      <div class="feedback-card" id="feedback-card">
+        <p class="feedback-player" id="feedback-player">Velg favorittspiller i profilen.</p>
+        <p class="feedback-text" id="feedback-text">Når du registrerer en tur, får du en tilbakemelding som er tilpasset lengde, høydemeter, fart og innsats.</p>
+      </div>
+
+      <div class="development-grid">
+        <article class="development-card"><span>Motor</span><strong id="gain-motor">+0</strong></article>
+        <article class="development-card"><span>Beinstyrke</span><strong id="gain-strength">+0</strong></article>
+        <article class="development-card"><span>Balanse</span><strong id="gain-balance">+0</strong></article>
+        <article class="development-card"><span>Viljestyrke</span><strong id="gain-mindset">+0</strong></article>
+      </div>
+    </section>
+
+    <section class="panel" id="history-section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">HISTORIKK</p>
+          <h2>Registrerte turer</h2>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Dato</th>
+              <th>Tur</th>
+              <th>Km</th>
+              <th>Høydemeter</th>
+              <th>Fart</th>
+              <th>Innsats</th>
+            </tr>
+          </thead>
+          <tbody id="trip-history-body">
+            <tr><td colspan="6">Ingen turer registrert ennå.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
