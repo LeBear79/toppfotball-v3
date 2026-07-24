@@ -214,40 +214,67 @@ function calculateXp(trip, gains) {
 }
 
 function createFeedback(trip, gains, xp) {
-  const player =
-    appData.profile.favoritePlayer || "favorittspilleren din";
+  const name = appData.profile.name || "spiller";
+  const strongestSkills = getStrongestSkills(gains);
 
   const intro =
-    trip.effort >= 4
-      ? "Dette var en krevende økt med høy innsats."
-      : trip.distance >= 5
-        ? "Dette var en solid utholdenhetsøkt."
-        : "Dette var en god og nyttig økt.";
+    trip.effort >= 5
+      ? "Du presset deg skikkelig i denne økten."
+      : trip.effort >= 4
+        ? "Dette var en krevende og solid økt."
+        : trip.distance >= 5
+          ? "Dette var en god utholdenhetsøkt."
+          : "Dette var en nyttig økt med god treningsverdi.";
 
   const elevationText =
     trip.elevation >= 300
-      ? `${trip.elevation} høydemeter gir svært god trening for beina.`
+      ? `${trip.elevation} høydemeter ga beina en skikkelig arbeidsøkt.`
       : trip.elevation >= 100
-        ? `${trip.elevation} høydemeter bygger styrke og stabilitet.`
-        : "Turen gir et godt grunnlag for videre utvikling.";
+        ? `${trip.elevation} høydemeter ga god trening for styrke og stabilitet.`
+        : "Turen ga et godt grunnlag for videre utvikling.";
 
   const peakText = trip.newPeak
-    ? "En ny topp viser både mot og vilje til å utfordre seg selv."
+    ? "At du nådde en ny topp viser også mot og evne til å holde ut når det blir krevende."
     : "";
 
-  return `Tips inspirert av ${player}: ${intro} ${elevationText} ${peakText} Du fikk ${xp} XP og størst utvikling i ${getBestGainName(gains)}.`;
+  const transferText = strongestSkills
+    .map((skill) => skill.transfer)
+    .join(" ");
+
+  return `${intro} ${elevationText} ${peakText} ${transferText} Du fikk ${xp} XP.`;
 }
 
-function getBestGainName(gains) {
-  const labels = {
-    motor: "motor",
-    strength: "beinstyrke",
-    balance: "balanse",
-    mindset: "viljestyrke"
+function getStrongestSkills(gains) {
+  const skillInfo = {
+    motor: {
+      label: "motor",
+      transfer:
+        "Bedre motor gjør det lettere å holde høy intensitet gjennom hele kampen, ta flere løp og fortsatt ha overskudd mot slutten."
+    },
+    strength: {
+      label: "beinstyrke",
+      transfer:
+        "Økt beinstyrke gir bedre kraft i sprint, skudd og retningsforandringer, og gjør deg sterkere i dueller."
+    },
+    balance: {
+      label: "balanse",
+      transfer:
+        "Bedre balanse hjelper deg med å holde kontroll på kroppen i vendinger, finter, taklinger og når du tar imot ballen under press."
+    },
+    mindset: {
+      label: "viljestyrke",
+      transfer:
+        "Sterkere viljestyrke gjør det lettere å fortsette å jobbe, holde konsentrasjonen og ta gode valg når du begynner å bli sliten."
+    }
   };
 
-  const best = Object.entries(gains).sort((a, b) => b[1] - a[1])[0];
-  return labels[best[0]];
+  const sorted = Object.entries(gains).sort((a, b) => b[1] - a[1]);
+  const highest = sorted[0][1];
+
+  return sorted
+    .filter(([, value]) => value >= highest - 1)
+    .slice(0, 2)
+    .map(([key]) => skillInfo[key]);
 }
 
 function renderAll() {
@@ -406,10 +433,9 @@ function goalInterval(prefix) {
 }
 
 function renderFeedback(trip) {
+  const name = appData.profile.name || "spiller";
   document.getElementById("feedback-player").textContent =
-    appData.profile.favoritePlayer
-      ? `Tips inspirert av ${appData.profile.favoritePlayer}`
-      : "Spilleranalyse";
+    `Godt jobbet, ${name}!`;
 
   document.getElementById("feedback-text").textContent =
     trip.feedback || createFeedback(trip, trip.gains, trip.xp);
@@ -425,10 +451,11 @@ function renderFeedback(trip) {
 }
 
 function renderEmptyFeedback() {
+  const name = appData.profile.name || "spiller";
   document.getElementById("feedback-player").textContent =
-    appData.profile.favoritePlayer
-      ? `Tips inspirert av ${appData.profile.favoritePlayer}`
-      : "Velg favorittspiller i profilen.";
+    appData.profile.name
+      ? `Klar for neste økt, ${name}?`
+      : "Registrer profilen din først.";
 
   document.getElementById("feedback-text").textContent =
     "Når du registrerer en tur, får du en tilbakemelding som er tilpasset lengde, høydemeter, fart og innsats.";

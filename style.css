@@ -677,23 +677,137 @@ tbody tr:hover td {
 
 
 /* =========================================================
-   v0.1.1 – sentrert toppområde
+   v0.1.2 – mer kontrast og tydeligere appfølelse
    ========================================================= */
 
-.site-header .container {
+.site-header {
+  background:
+    linear-gradient(135deg, rgba(14, 32, 55, 0.98), rgba(5, 14, 25, 0.9)),
+    linear-gradient(90deg, transparent, rgba(215, 177, 92, 0.07));
+}
+
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold-dark) 18%,
+    var(--gold-light) 50%,
+    var(--gold-dark) 82%,
+    transparent 100%
+  );
+  opacity: 0.9;
+}
+
+.panel {
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.panel:nth-of-type(even) {
+  background:
+    linear-gradient(180deg, rgba(20, 42, 70, 0.98), rgba(9, 23, 40, 0.99));
+}
+
+.section-heading h2 {
+  color: #ffffff;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::before {
+  content: "";
+  width: 22px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+}
+
+.metric-card {
   position: relative;
-  z-index: 1;
-  text-align: center;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-.site-header h1 {
-  margin-inline: auto;
+.metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold-dark));
 }
 
-.tagline {
-  margin-inline: auto;
+.metric-card:nth-child(2)::before {
+  background: linear-gradient(180deg, #7cc8ff, #326a9b);
 }
 
-.eyebrow {
-  text-align: center;
+.metric-card:nth-child(3)::before {
+  background: linear-gradient(180deg, #73e2ad, #2f8d63);
+}
+
+.metric-card:nth-child(4)::before {
+  background: linear-gradient(180deg, #d39cff, #7650a3);
+}
+
+.metric-value {
+  color: #ffffff;
+  text-shadow: 0 2px 14px rgba(255, 255, 255, 0.05);
+}
+
+.level-box {
+  box-shadow:
+    0 12px 28px rgba(215, 177, 92, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.feedback-card {
+  border-color: rgba(242, 213, 138, 0.46);
+  background:
+    linear-gradient(135deg, rgba(215, 177, 92, 0.18), rgba(16, 34, 58, 0.86));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.feedback-player {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+}
+
+.development-card {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(22, 48, 79, 0.92), rgba(9, 23, 40, 0.94));
+}
+
+.development-card strong {
+  padding: 6px 10px;
+  border: 1px solid rgba(215, 177, 92, 0.24);
+  border-radius: 10px;
+  background: rgba(215, 177, 92, 0.08);
+}
+
+.button-primary {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+input,
+select {
+  background: rgba(3, 11, 20, 0.68);
+}
+
+.table-wrapper {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.018);
 }
