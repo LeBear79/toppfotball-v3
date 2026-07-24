@@ -117,3 +117,6 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(241,
   background:linear-gradient(145deg,#ffe16a,#7d5a12);box-shadow:0 0 28px rgba(241,197,78,.28)
 }
 @media(max-width:700px){.skill-icon-stack{font-size:1.55rem;letter-spacing:-4px}.trophy{width:64px;height:64px;font-size:2.35rem}}
+
+/* v0.2.3: tydelige nivåsymboler og korrekt nullstilling av nivåprosent */
+.skill-icon-stack{letter-spacing:0;gap:5px;padding-right:0;line-height:1}

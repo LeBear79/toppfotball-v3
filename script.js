@@ -1,4 +1,5 @@
 const STORAGE_KEY = "toppfotball-v2";
+const APP_VERSION = "0.2.3";
 
 const skillProfiles = {
   motor: {
@@ -351,24 +352,33 @@ function renderProgress(p) {
   setBar("xp-progress", xpPercent);
 }
 
-function renderSkill(key, points) {
+function renderSkill(key, rawPoints) {
+  const points = Math.max(0, Number(rawPoints) || 0);
   const tier = getSkillTier(points);
-  const progressInTier = Math.max(0, points - tier.min);
   const tierLength = tier.max - tier.min;
-  const percent = tier.label === "ELITE" && points >= tier.max
+  const progressInTier = Math.max(0, points - tier.min);
+  const isMaxedElite = tier.label === "ELITE" && points >= tier.max;
+  const percent = isMaxedElite
     ? 100
-    : Math.round((progressInTier / tierLength) * 100);
+    : Math.floor((progressInTier / tierLength) * 100);
 
-  document.getElementById(`skill-${key}`).textContent = `${clamp(percent, 0, 100)}%`;
-  document.getElementById(`skill-${key}-level`).textContent =
-    `${skillProfiles[key].cardName} ${tier.label}`;
-  document.getElementById(`skill-${key}-icons`).textContent = getSkillIcon(key).repeat(tier.icons);
-  document.getElementById(`skill-${key}-icons`).setAttribute("aria-label", `${tier.icons} nivåsymboler`);
+  const percentElement = document.getElementById(`skill-${key}`);
+  const levelElement = document.getElementById(`skill-${key}-level`);
+  const iconsElement = document.getElementById(`skill-${key}-icons`);
+
+  if (percentElement) percentElement.textContent = `${clamp(percent, 0, 100)}%`;
+  if (levelElement) levelElement.textContent = `${skillProfiles[key].cardName} ${tier.label}`;
+  if (iconsElement) {
+    iconsElement.textContent = Array(tier.icons).fill(getSkillIcon(key)).join(" ");
+    iconsElement.setAttribute("aria-label", `${tier.icons} nivåsymboler`);
+  }
   setBar(`skill-${key}-bar`, percent);
 }
 
-function getSkillTier(points) {
-  return skillTiers.find(tier => points < tier.max) || skillTiers[skillTiers.length - 1];
+function getSkillTier(rawPoints) {
+  const points = Math.max(0, Number(rawPoints) || 0);
+  return skillTiers.find(tier => points >= tier.min && points < tier.max)
+    || skillTiers[skillTiers.length - 1];
 }
 
 function getSkillIcon(key) {
