@@ -674,3 +674,26 @@ tbody tr:hover td {
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* =========================================================
+   v0.1.1 – sentrert toppområde
+   ========================================================= */
+
+.site-header .container {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.site-header h1 {
+  margin-inline: auto;
+}
+
+.tagline {
+  margin-inline: auto;
+}
+
+.eyebrow {
+  text-align: center;
+}
