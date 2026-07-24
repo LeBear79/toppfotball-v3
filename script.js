@@ -34,25 +34,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bindEvents() {
-  document
-    .getElementById("profile-form")
-    .addEventListener("submit", handleProfileSubmit);
+  const profileForm = document.getElementById("profile-form");
+  const tripForm = document.getElementById("trip-form");
+  const profileSelector = document.getElementById("profile-selector");
+  const newProfileButton = document.getElementById("new-profile-button");
+  const deleteProfileButton =
+    document.getElementById("delete-profile-button");
 
-  document
-    .getElementById("trip-form")
-    .addEventListener("submit", handleTripSubmit);
-
-  document
-    .getElementById("profile-selector")
-    .addEventListener("change", handleProfileSwitch);
-
-  document
-    .getElementById("new-profile-button")
-    .addEventListener("click", createNewProfile);
-
-  document
-    .getElementById("delete-profile-button")
-    .addEventListener("click", deleteActiveProfile);
+  profileForm?.addEventListener("submit", handleProfileSubmit);
+  tripForm?.addEventListener("submit", handleTripSubmit);
+  profileSelector?.addEventListener("change", handleProfileSwitch);
+  newProfileButton?.addEventListener("click", createNewProfile);
+  deleteProfileButton?.addEventListener("click", deleteActiveProfile);
 }
 
 function loadData() {
@@ -173,10 +166,15 @@ function handleProfileSubmit(event) {
   const name = document.getElementById("profile-name").value.trim();
   const favoritePlayer =
     document.getElementById("favorite-player").value.trim();
+  const profileImageInput =
+    document.getElementById("profile-image");
+  const playerImageInput =
+    document.getElementById("favorite-player-image");
+
   const profileImageFile =
-    document.getElementById("profile-image").files[0];
+    profileImageInput?.files?.[0] || null;
   const playerImageFile =
-    document.getElementById("favorite-player-image").files[0];
+    playerImageInput?.files?.[0] || null;
 
   const readImage = (file, fallback) =>
     new Promise((resolve, reject) => {
@@ -265,15 +263,26 @@ function handleTripSubmit(event) {
   profile.stats.balance += gains.balance;
   profile.stats.mindset += gains.mindset;
 
-  saveData();
-  renderAll();
+  try {
+    saveData();
+    renderAll();
 
-  event.target.reset();
-  setDefaultDate();
+    event.target.reset();
+    setDefaultDate();
 
-  document
-    .getElementById("feedback-section")
-    .scrollIntoView({ behavior: "smooth", block: "start" });
+    showTemporaryButtonText(
+      event.submitter,
+      "Tur registrert",
+      "Registrer tur"
+    );
+
+    document
+      .getElementById("feedback-section")
+      .scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    console.error("Kunne ikke registrere turen:", error);
+    alert("Turen kunne ikke registreres. Last siden på nytt og prøv igjen.");
+  }
 }
 
 function calculateGains(trip) {
@@ -417,8 +426,12 @@ function restoreProfileForm() {
   document.getElementById("profile-name").value = profile.name;
   document.getElementById("favorite-player").value =
     profile.favoritePlayer;
-  document.getElementById("profile-image").value = "";
-  document.getElementById("favorite-player-image").value = "";
+  const profileImageInput = document.getElementById("profile-image");
+  const playerImageInput =
+    document.getElementById("favorite-player-image");
+
+  if (profileImageInput) profileImageInput.value = "";
+  if (playerImageInput) playerImageInput.value = "";
 }
 
 function renderProfile() {

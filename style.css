@@ -1129,3 +1129,49 @@ tbody tr:hover td {
     height: 58px;
   }
 }
+
+
+/* =========================================================
+   v0.1.5 – synlige valg og egen spilleropplasting
+   ========================================================= */
+
+select,
+select:focus,
+select:hover {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+}
+
+select option {
+  color: #ffffff !important;
+  background: #10223a !important;
+}
+
+select option:checked {
+  color: #ffffff !important;
+  background: #1b3a61 !important;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="file"] {
+  color: #ffffff;
+}
+
+input[type="file"]::file-selector-button {
+  color: #17130a;
+}
+
+/* Egen visuell markering for de to bildeopplastingene */
+#profile-image,
+#favorite-player-image {
+  min-height: 54px;
+  border-color: rgba(242, 213, 138, 0.22);
+}
+
+#profile-image:focus,
+#favorite-player-image:focus {
+  border-color: var(--gold);
+}
