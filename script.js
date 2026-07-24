@@ -1,5 +1,5 @@
 const STORAGE_KEY = "toppfotball-v2";
-const APP_VERSION = "0.2.3";
+const APP_VERSION = "0.2.4";
 
 const skillProfiles = {
   motor: {
@@ -91,14 +91,14 @@ const skillTiers = [
 ];
 
 const xpRanks = [
-  { title: "Nytt talent", trophy: "◆" },
-  { title: "Lovende spiller", trophy: "◇" },
-  { title: "Kampklar", trophy: "⬟" },
-  { title: "Lagspiller", trophy: "⬢" },
-  { title: "Nøkkelspiller", trophy: "★" },
-  { title: "Stjernespiller", trophy: "✦" },
-  { title: "Toppfotballspiller", trophy: "🏆" },
-  { title: "Klubblegende", trophy: "♛" }
+  { title: "Nytt talent", trophy: "◆", medalName: "Talentmerket" },
+  { title: "Lovende spiller", trophy: "◇", medalName: "Bronsemerket" },
+  { title: "Kampklar", trophy: "⬟", medalName: "Sølvmerket" },
+  { title: "Lagspiller", trophy: "⬢", medalName: "Gullmerket" },
+  { title: "Nøkkelspiller", trophy: "★", medalName: "Stjernemerket" },
+  { title: "Stjernespiller", trophy: "✦", medalName: "Mestermerket" },
+  { title: "Toppfotballspiller", trophy: "♛", medalName: "Toppmerket" },
+  { title: "Klubblegende", trophy: "🏆", medalName: "Legendepokalen" }
 ];
 
 
@@ -168,6 +168,10 @@ function bindEvents() {
     document.getElementById("profile-name").focus();
   });
   document.getElementById("delete-profile-button").addEventListener("click", deleteProfile);
+  document.getElementById("rank-up-close").addEventListener("click", closeRankCelebration);
+  document.getElementById("rank-up-overlay").addEventListener("click", e => {
+    if (e.target.id === "rank-up-overlay") closeRankCelebration();
+  });
 }
 
 async function saveProfile(e) {
@@ -235,7 +239,12 @@ function saveTrip(e) {
     trip.distance * 8 + trip.elevation * 0.08 + trip.effort * 7 +
     (trip.newPeak ? 20 : 0) + Object.values(gains).reduce((a,b)=>a+b,0)
   ));
-  trip.feedback = makeFeedback(p, gains);
+
+  const previousXp = p.stats.xp;
+  const previousRankIndex = getXpRankIndex(previousXp);
+  const newRankIndex = getXpRankIndex(previousXp + trip.xp);
+  trip.rankUp = newRankIndex > previousRankIndex ? newRankIndex : null;
+  trip.feedback = makeFeedback(p, gains, trip.xp, trip.rankUp);
 
   p.trips.unshift(trip);
   p.stats.xp += trip.xp;
@@ -248,7 +257,7 @@ function saveTrip(e) {
   document.getElementById("feedback-title").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function makeFeedback(profile, gains) {
+function makeFeedback(profile, gains, xpEarned, rankUpIndex = null) {
   const strongest = Object.entries(gains)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
@@ -265,7 +274,12 @@ function makeFeedback(profile, gains) {
   const template = pickFresh(profile, feedbackTemplates, "template", 3);
   const identities = `${first.identity} og ${second.identity}`;
 
-  const text = template({ opening, identities, effect1: firstEffect, effect2: secondEffect, connector, ending });
+  const mainText = template({ opening, identities, effect1: firstEffect, effect2: secondEffect, connector, ending });
+  const xpText = `Denne turen ga deg ${xpEarned} XP!`;
+  const rankText = rankUpIndex !== null
+    ? ` Gratulerer – du er nå ${xpRanks[rankUpIndex].title}!`
+    : "";
+  const text = `${mainText} ${xpText}${rankText}`;
   profile.recentFullFeedback ||= [];
   profile.recentFullFeedback.push(text);
   profile.recentFullFeedback = profile.recentFullFeedback.slice(-6);
@@ -295,6 +309,7 @@ function renderAll() {
   renderProgress(p);
   renderFeedback(p);
   renderTrips(p);
+  maybeShowRankCelebration(p);
 }
 
 function renderProfileSelector() {
@@ -343,13 +358,19 @@ function renderProgress(p) {
   const xpLevel = Math.floor(p.stats.xp / 500) + 1;
   const currentXp = p.stats.xp % 500;
   const xpPercent = Math.round(currentXp / 500 * 100);
-  const rank = xpRanks[Math.min(xpLevel - 1, xpRanks.length - 1)];
+  const rankIndex = getXpRankIndex(p.stats.xp);
+  const rank = xpRanks[rankIndex];
   document.getElementById("total-xp").textContent = p.stats.xp;
   document.getElementById("xp-rank-title").textContent = rank.title;
   document.getElementById("xp-trophy").textContent = rank.trophy;
-  document.getElementById("xp-trophy").dataset.level = String(Math.min(xpLevel, xpRanks.length));
-  document.getElementById("xp-remaining").textContent = `${500-currentXp} XP igjen`;
-  setBar("xp-progress", xpPercent);
+  document.getElementById("xp-trophy").dataset.level = String(rankIndex + 1);
+  document.getElementById("xp-trophy").setAttribute("aria-label", `${rank.medalName}: ${rank.title}`);
+  document.getElementById("xp-medal-name").textContent = rank.medalName;
+  const isFinalRank = rankIndex === xpRanks.length - 1;
+  document.getElementById("xp-remaining").textContent = isFinalRank
+    ? "Høyeste nivå"
+    : `${500-currentXp} XP igjen`;
+  setBar("xp-progress", isFinalRank ? 100 : xpPercent);
 }
 
 function renderSkill(key, rawPoints) {
@@ -385,6 +406,32 @@ function getSkillIcon(key) {
   return { motor: "⚡", strength: "↯", balance: "↔", mindset: "★" }[key];
 }
 
+
+function getXpRankIndex(xp) {
+  return Math.min(Math.floor(Math.max(0, Number(xp) || 0) / 500), xpRanks.length - 1);
+}
+
+function maybeShowRankCelebration(profile) {
+  const latest = profile.trips[0];
+  if (!latest || latest.rankUp === null || latest.rankUp === undefined || latest.rankCelebrated) return;
+
+  const rank = xpRanks[latest.rankUp];
+  document.getElementById("rank-up-symbol").textContent = rank.trophy;
+  document.getElementById("rank-up-title").textContent = rank.title;
+  document.getElementById("rank-up-medal").textContent = rank.medalName;
+  const overlay = document.getElementById("rank-up-overlay");
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add("show"));
+
+  latest.rankCelebrated = true;
+  saveData();
+}
+
+function closeRankCelebration() {
+  const overlay = document.getElementById("rank-up-overlay");
+  overlay.classList.remove("show");
+  window.setTimeout(() => { overlay.hidden = true; }, 250);
+}
 
 function renderFeedback(p) {
   const latest = p.trips[0];

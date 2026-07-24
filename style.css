@@ -120,3 +120,69 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(241,
 
 /* v0.2.3: tydelige nivåsymboler og korrekt nullstilling av nivåprosent */
 .skill-icon-stack{letter-spacing:0;gap:5px;padding-right:0;line-height:1}
+
+/* v0.2.4 – XP-belønninger */
+.xp-medal-name {
+  display: block;
+  margin-top: .25rem;
+  color: #aebfd4;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.trophy[data-level="1"] { background: linear-gradient(145deg, #52657a, #26384c); }
+.trophy[data-level="2"] { background: linear-gradient(145deg, #a96a42, #5f3826); }
+.trophy[data-level="3"] { background: linear-gradient(145deg, #d8e0e8, #687888); }
+.trophy[data-level="4"] { background: linear-gradient(145deg, #ffd75a, #a66d08); }
+.trophy[data-level="5"] { background: linear-gradient(145deg, #f3c340, #6f4f05); }
+.trophy[data-level="6"] { background: linear-gradient(145deg, #f8e489, #b68a12); }
+.trophy[data-level="7"] { background: linear-gradient(145deg, #ffcf42, #7d4d00); }
+.trophy[data-level="8"] { background: linear-gradient(145deg, #fff0a8, #c08300); }
+
+.rank-up-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(1, 10, 22, .82);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.rank-up-overlay.show { opacity: 1; }
+.rank-up-overlay[hidden] { display: none; }
+
+.rank-up-card {
+  width: min(430px, 100%);
+  padding: 2.25rem;
+  border: 1px solid #f7c845;
+  border-radius: 28px;
+  background: linear-gradient(160deg, #173653, #071b30);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+  text-align: center;
+  transform: translateY(18px) scale(.96);
+  transition: transform .3s ease;
+}
+
+.rank-up-overlay.show .rank-up-card { transform: translateY(0) scale(1); }
+.rank-up-kicker {
+  display: block;
+  color: #f7c845;
+  font-weight: 900;
+  letter-spacing: .15em;
+  font-size: .82rem;
+}
+.rank-up-symbol {
+  margin: 1.1rem auto .5rem;
+  font-size: 5rem;
+  line-height: 1;
+  filter: drop-shadow(0 8px 16px rgba(247, 200, 69, .3));
+}
+.rank-up-card h2 { margin: .4rem 0; font-size: 2rem; }
+.rank-up-card strong { display: block; color: #f7c845; font-size: 1.55rem; }
+.rank-up-card > span:last-of-type { display: block; margin: .4rem 0 1.5rem; color: #b8c9dc; }

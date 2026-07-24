@@ -140,6 +140,7 @@
             <span>TOTAL XP</span>
             <strong id="total-xp">0</strong>
             <small id="xp-rank-title" class="xp-rank-title">Nytt talent</small>
+            <small id="xp-medal-name" class="xp-medal-name">Talentmerket</small>
           </div>
           <div class="xp-next">
             <span>NESTE NIVÅ</span>
@@ -224,6 +225,17 @@
     </section>
   </main>
 
-  <script src="script.js?v=0.2.3"></script>
+  <script src="script.js?v=0.2.4"></script>
+
+  <div id="rank-up-overlay" class="rank-up-overlay" hidden>
+    <div class="rank-up-card" role="dialog" aria-modal="true" aria-labelledby="rank-up-heading">
+      <span class="rank-up-kicker">NYTT XP-NIVÅ</span>
+      <div id="rank-up-symbol" class="rank-up-symbol">◇</div>
+      <h2 id="rank-up-heading">Gratulerer!</h2>
+      <strong id="rank-up-title">Lovende spiller</strong>
+      <span id="rank-up-medal">Bronsemerket</span>
+      <button id="rank-up-close" class="button primary" type="button">Fortsett</button>
+    </div>
+  </div>
 </body>
 </html>
