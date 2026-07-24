@@ -9,7 +9,8 @@ const defaultData = {
   profile: {
     name: "",
     favoritePlayer: "",
-    image: ""
+    image: "",
+    favoritePlayerImage: ""
   },
   trips: [],
   stats: {
@@ -76,40 +77,45 @@ function handleProfileSubmit(event) {
   event.preventDefault();
 
   const name = document.getElementById("profile-name").value.trim();
-  const favoritePlayer = document
-    .getElementById("favorite-player")
-    .value.trim();
-  const imageFile = document.getElementById("profile-image").files[0];
+  const favoritePlayer = document.getElementById("favorite-player").value.trim();
+  const profileImageFile = document.getElementById("profile-image").files[0];
+  const playerImageFile = document.getElementById("favorite-player-image").files[0];
 
-  const finishSaving = (imageData = appData.profile.image) => {
-    appData.profile = {
-      name,
-      favoritePlayer,
-      image: imageData
-    };
+  const readImage = (file, fallback) =>
+    new Promise((resolve, reject) => {
+      if (!file) {
+        resolve(fallback || "");
+        return;
+      }
 
-    saveData();
-    renderAll();
-    showTemporaryButtonText(
-      event.submitter,
-      "Profil lagret",
-      "Lagre profil"
-    );
-  };
+      if (!file.type.startsWith("image/")) {
+        reject(new Error("Velg bare bildefiler."));
+        return;
+      }
 
-  if (imageFile) {
-    if (!imageFile.type.startsWith("image/")) {
-      alert("Velg en bildefil.");
-      return;
-    }
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Bildet kunne ikke leses."));
+      reader.readAsDataURL(file);
+    });
 
-    const reader = new FileReader();
-    reader.onload = () => finishSaving(reader.result);
-    reader.onerror = () => alert("Bildet kunne ikke leses.");
-    reader.readAsDataURL(imageFile);
-  } else {
-    finishSaving();
-  }
+  Promise.all([
+    readImage(profileImageFile, appData.profile.image),
+    readImage(playerImageFile, appData.profile.favoritePlayerImage)
+  ])
+    .then(([profileImage, favoritePlayerImage]) => {
+      appData.profile = {
+        name,
+        favoritePlayer,
+        image: profileImage,
+        favoritePlayerImage
+      };
+
+      saveData();
+      renderAll();
+      showTemporaryButtonText(event.submitter, "Profil lagret", "Lagre profil");
+    })
+    .catch((error) => alert(error.message));
 }
 
 function handleTripSubmit(event) {
@@ -291,8 +297,29 @@ function renderAll() {
 
 function renderProfile() {
   const name = appData.profile.name || "";
+  const favoritePlayer = appData.profile.favoritePlayer || "";
+
   document.getElementById("welcome-heading").textContent =
     name ? `Hei, ${name}!` : "Hei!";
+
+  document.getElementById("profile-summary-name").textContent =
+    name || "Ingen profil lagret";
+
+  document.getElementById("profile-summary-player").textContent =
+    favoritePlayer ? `Favorittspiller: ${favoritePlayer}` : "Velg favorittspiller";
+
+  const avatar = document.getElementById("profile-avatar");
+  const placeholder = document.getElementById("profile-avatar-placeholder");
+
+  if (appData.profile.image) {
+    avatar.src = appData.profile.image;
+    avatar.hidden = false;
+    placeholder.hidden = true;
+  } else {
+    avatar.hidden = true;
+    placeholder.hidden = false;
+    placeholder.textContent = getInitials(name) || "TF";
+  }
 }
 
 function renderDashboard() {
@@ -402,15 +429,7 @@ function nextElevationGoal(value) {
 }
 
 function renderGoal(prefix, value, goal, unit, decimals) {
-  const previousGoal =
-    prefix === "elevation"
-      ? previousElevationGoal(goal)
-      : Math.max(0, goal - goalInterval(prefix));
-
-  const progress =
-    goal === previousGoal
-      ? 0
-      : ((value - previousGoal) / (goal - previousGoal)) * 100;
+  const progress = goal > 0 ? (value / goal) * 100 : 0;
 
   document.getElementById(`${prefix}-next`).textContent =
     `Neste mål: ${formatNumber(goal, decimals)} ${unit}`;
@@ -440,29 +459,44 @@ function renderFeedback(trip) {
   document.getElementById("feedback-text").textContent =
     trip.feedback || createFeedback(trip, trip.gains, trip.xp);
 
-  document.getElementById("gain-motor").textContent =
-    `+${trip.gains.motor}`;
-  document.getElementById("gain-strength").textContent =
-    `+${trip.gains.strength}`;
-  document.getElementById("gain-balance").textContent =
-    `+${trip.gains.balance}`;
-  document.getElementById("gain-mindset").textContent =
-    `+${trip.gains.mindset}`;
+  document.getElementById("gain-motor").textContent = `+${trip.gains.motor}`;
+  document.getElementById("gain-strength").textContent = `+${trip.gains.strength}`;
+  document.getElementById("gain-balance").textContent = `+${trip.gains.balance}`;
+  document.getElementById("gain-mindset").textContent = `+${trip.gains.mindset}`;
+
+  renderFavoritePlayerImage();
 }
 
 function renderEmptyFeedback() {
   const name = appData.profile.name || "spiller";
   document.getElementById("feedback-player").textContent =
-    appData.profile.name
-      ? `Klar for neste økt, ${name}?`
-      : "Registrer profilen din først.";
+    appData.profile.name ? `Klar for første økt, ${name}?` : "Registrer profilen din først.";
 
   document.getElementById("feedback-text").textContent =
-    "Når du registrerer en tur, får du en tilbakemelding som er tilpasset lengde, høydemeter, fart og innsats.";
+    "Når du registrerer en tur, får du en tilbakemelding som forklarer hvordan treningen kan hjelpe deg på fotballbanen.";
 
   ["motor", "strength", "balance", "mindset"].forEach((key) => {
     document.getElementById(`gain-${key}`).textContent = "+0";
   });
+
+  renderFavoritePlayerImage();
+}
+
+function renderFavoritePlayerImage() {
+  const wrap = document.getElementById("feedback-image-wrap");
+  const image = document.getElementById("feedback-player-image");
+  const imageData = appData.profile.favoritePlayerImage;
+
+  if (imageData) {
+    image.src = imageData;
+    image.alt = appData.profile.favoritePlayer
+      ? `Bilde av ${appData.profile.favoritePlayer}`
+      : "Bilde av favorittspiller";
+    wrap.hidden = false;
+  } else {
+    image.removeAttribute("src");
+    wrap.hidden = true;
+  }
 }
 
 function renderHistory() {
@@ -471,7 +505,7 @@ function renderHistory() {
   if (appData.trips.length === 0) {
     body.innerHTML = `
       <tr>
-        <td colspan="6">Ingen turer registrert ennå.</td>
+        <td colspan="7">Ingen turer registrert ennå.</td>
       </tr>
     `;
     return;
@@ -487,9 +521,63 @@ function renderHistory() {
           <td>${Math.round(trip.elevation)}</td>
           <td>${formatNumber(trip.speed, 1)} km/t</td>
           <td>${trip.effort}/5</td>
+          <td>
+            <button
+              type="button"
+              class="delete-trip-button"
+              data-trip-id="${escapeHtml(trip.id)}"
+            >
+              Slett
+            </button>
+          </td>
         </tr>
       `
     )
+    .join("");
+
+  body.querySelectorAll(".delete-trip-button").forEach((button) => {
+    button.addEventListener("click", () => deleteTrip(button.dataset.tripId));
+  });
+}
+
+function deleteTrip(tripId) {
+  const trip = appData.trips.find((item) => item.id === tripId);
+  if (!trip) return;
+
+  const confirmed = window.confirm(`Vil du slette turen "${trip.name}"?`);
+  if (!confirmed) return;
+
+  appData.trips = appData.trips.filter((item) => item.id !== tripId);
+  recalculateStats();
+  saveData();
+  renderAll();
+}
+
+function recalculateStats() {
+  appData.stats = {
+    xp: 0,
+    motor: 0,
+    strength: 0,
+    balance: 0,
+    mindset: 0
+  };
+
+  appData.trips.forEach((trip) => {
+    appData.stats.xp += Number(trip.xp) || 0;
+    appData.stats.motor += Number(trip.gains?.motor) || 0;
+    appData.stats.strength += Number(trip.gains?.strength) || 0;
+    appData.stats.balance += Number(trip.gains?.balance) || 0;
+    appData.stats.mindset += Number(trip.gains?.mindset) || 0;
+  });
+}
+
+function getInitials(name) {
+  return String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
     .join("");
 }
 
