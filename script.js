@@ -1,5 +1,5 @@
 const STORAGE_KEY = "toppfotball-v2";
-const APP_VERSION = "0.2.6";
+const APP_VERSION = "0.2.8";
 
 const skillProfiles = {
   motor: {
@@ -419,7 +419,7 @@ function renderSkill(key, rawPoints) {
   const iconsElement = document.getElementById(`skill-${key}-icons`);
 
   if (percentElement) percentElement.textContent = `${clamp(percent, 0, 100)}%`;
-  if (levelElement) levelElement.textContent = `${skillProfiles[key].cardName} ${tier.label}`;
+  if (levelElement) levelElement.textContent = `NIVÅ ${tier.label}`;
   if (iconsElement) {
     iconsElement.textContent = Array(tier.icons).fill(getSkillIcon(key)).join(" ");
     iconsElement.setAttribute("aria-label", `${tier.icons} nivåsymboler`);
