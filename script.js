@@ -241,6 +241,13 @@ function saveTrip(e) {
     newPeak: value("trip-new-peak") === "ja"
   };
 
+  const previousVisits = p.trips.filter(existingTrip =>
+    normalizeTripName(existingTrip.name) === normalizeTripName(trip.name)
+  ).length;
+  trip.visitNumber = previousVisits + 1;
+  trip.newPeakBonus = trip.newPeak ? 50 : 0;
+  trip.milestoneBonus = !trip.newPeak && trip.visitNumber >= 2 && trip.visitNumber % 2 === 0 ? 25 : 0;
+
   const gains = {
     motor: clamp(Math.round(trip.distance / 2 + trip.speed / 4), 1, 8),
     strength: clamp(Math.round(trip.elevation / 120 + trip.effort / 2), 1, 8),
@@ -249,16 +256,17 @@ function saveTrip(e) {
   };
 
   trip.gains = gains;
-  trip.xp = Math.max(10, Math.round(
+  trip.baseXp = Math.max(10, Math.round(
     trip.distance * 8 + trip.elevation * 0.08 + trip.effort * 7 +
-    (trip.newPeak ? 20 : 0) + Object.values(gains).reduce((a,b)=>a+b,0)
+    Object.values(gains).reduce((a,b)=>a+b,0)
   ));
+  trip.xp = trip.baseXp + trip.newPeakBonus + trip.milestoneBonus;
 
   const previousXp = p.stats.xp;
   const previousRankIndex = getXpRankIndex(previousXp);
   const newRankIndex = getXpRankIndex(previousXp + trip.xp);
   trip.rankUp = newRankIndex > previousRankIndex ? newRankIndex : null;
-  trip.feedback = makeFeedback(p, gains, trip.xp, trip.rankUp);
+  trip.feedback = makeFeedback(p, gains, trip.xp, trip.rankUp, trip);
 
   p.trips.unshift(trip);
   p.stats.xp += trip.xp;
@@ -271,7 +279,7 @@ function saveTrip(e) {
   document.getElementById("feedback-title").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function makeFeedback(profile, gains, xpEarned, rankUpIndex = null) {
+function makeFeedback(profile, gains, xpEarned, rankUpIndex = null, trip = null) {
   const strongest = Object.entries(gains)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
@@ -289,11 +297,19 @@ function makeFeedback(profile, gains, xpEarned, rankUpIndex = null) {
   const identities = `${first.identity} og ${second.identity}`;
 
   const mainText = template({ opening, identities, effect1: firstEffect, effect2: secondEffect, connector, ending });
-  const xpText = `Denne turen ga deg ${xpEarned} XP!`;
+  const bonusParts = [];
+  if (trip?.newPeakBonus) {
+    bonusParts.push(`Du oppdaget en ny topp og fikk ${trip.newPeakBonus} bonus-XP.`);
+  }
+  if (trip?.milestoneBonus) {
+    bonusParts.push(`Dette var gang nummer ${trip.visitNumber} på denne turen, og du fikk ${trip.milestoneBonus} bonus-XP for å nå en ny turmilepæl.`);
+  }
+  const bonusText = bonusParts.length ? ` ${bonusParts.join(" ")}` : "";
+  const xpText = ` Denne turen ga deg totalt ${xpEarned} XP!`;
   const rankText = rankUpIndex !== null
     ? ` Gratulerer – du er nå ${xpRanks[rankUpIndex].title}!`
     : "";
-  const text = `${mainText} ${xpText}${rankText}`;
+  const text = `${mainText}${bonusText}${xpText}${rankText}`;
   profile.recentFullFeedback ||= [];
   profile.recentFullFeedback.push(text);
   profile.recentFullFeedback = profile.recentFullFeedback.slice(-6);
@@ -488,8 +504,10 @@ function renderTrips(p) {
     <div class="trip-item">
       <div class="trip-icon">▲</div>
       <div>
-        <strong>${escapeHtml(formatDate(t.date))}</strong>
-        <span>${formatNumber(t.distance,1)} km · ${Math.round(t.elevation)} hm · ${formatNumber(t.speed,1)} km/t</span>
+        <strong>${escapeHtml(t.name || formatDate(t.date))}</strong>
+        <span>${escapeHtml(formatDate(t.date))} · ${formatNumber(t.distance,1)} km · ${Math.round(t.elevation)} hm · ${formatNumber(t.speed,1)} km/t</span>
+        ${t.newPeakBonus ? `<span>Ny topp: +${t.newPeakBonus} bonus-XP</span>` : ""}
+        ${t.milestoneBonus ? `<span>Turmilepæl ${t.visitNumber}: +${t.milestoneBonus} bonus-XP</span>` : ""}
         <span class="trip-xp">+${t.xp} XP</span>
       </div>
       <button class="delete-trip" data-id="${t.id}" type="button">Slett</button>
@@ -523,6 +541,15 @@ function showImage(imgId, placeholderId, src, fallback) {
   const ph = document.getElementById(placeholderId);
   if (src) { img.src = src; img.hidden = false; ph.hidden = true; }
   else { img.hidden = true; ph.hidden = false; ph.textContent = fallback; }
+}
+
+function normalizeTripName(name) {
+  return String(name || "")
+    .trim()
+    .toLocaleLowerCase("nb-NO")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
 }
 
 function nextGoal(value, step) {
