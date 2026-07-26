@@ -1,5 +1,5 @@
 const STORAGE_KEY = "toppfotball-v2";
-const APP_VERSION = "0.3.2";
+const APP_VERSION = "0.3.3";
 
 const skillProfiles = {
   motor: {
@@ -117,6 +117,7 @@ function createProfile(name = "") {
   return {
     id: makeId(),
     name,
+    age: null,
     favoritePlayer: "",
     image: "",
     favoritePlayerImage: "",
@@ -305,6 +306,7 @@ function normalizeImportedData(data) {
     ...createProfile(profile.name || ""),
     ...profile,
     id: profile.id || makeId(),
+    age: Number.isInteger(Number(profile.age)) ? Number(profile.age) : null,
     trips: Array.isArray(profile.trips) ? profile.trips : [],
     stats: profile.stats && typeof profile.stats === "object"
       ? { xp: 0, motor: 0, strength: 0, balance: 0, mindset: 0, ...profile.stats }
@@ -322,7 +324,20 @@ function normalizeImportedData(data) {
 async function saveProfile(e) {
   e.preventDefault();
   const p = activeProfile();
-  p.name = document.getElementById("profile-name").value.trim();
+  const name = document.getElementById("profile-name").value.trim();
+  const age = Number(document.getElementById("profile-age").value);
+
+  if (!name) {
+    alert("Skriv inn navn på brukeren.");
+    return;
+  }
+  if (!Number.isInteger(age) || age < 4 || age > 99) {
+    alert("Skriv inn en gyldig alder mellom 4 og 99 år.");
+    return;
+  }
+
+  p.name = name;
+  p.age = age;
   p.favoritePlayer = document.getElementById("favorite-player").value.trim();
 
   const cameraFile = document.getElementById("profile-camera").files[0];
@@ -439,6 +454,12 @@ function saveTrip(e) {
   e.preventDefault();
   const p = activeProfile();
 
+  if (!Number.isInteger(Number(p.age)) || Number(p.age) < 4) {
+    alert("Legg inn og lagre brukerens alder før du registrerer en tur.");
+    document.getElementById("profile-age").focus();
+    return;
+  }
+
   const trip = {
     id: makeId(),
     name: value("trip-name"),
@@ -465,10 +486,13 @@ function saveTrip(e) {
   };
 
   trip.gains = gains;
-  trip.baseXp = Math.max(10, Math.round(
+  trip.originalBaseXp = Math.max(10, Math.round(
     trip.distance * 8 + trip.elevation * 0.08 + trip.effort * 7 +
     Object.values(gains).reduce((a,b)=>a+b,0)
   ));
+  trip.ageAtRegistration = Number(p.age);
+  trip.ageFactor = getAgeFactor(trip.ageAtRegistration);
+  trip.baseXp = Math.max(10, Math.round(trip.originalBaseXp * trip.ageFactor));
   trip.xp = trip.baseXp + trip.newPeakBonus + trip.milestoneBonus;
 
   const previousXp = p.stats.xp;
@@ -486,6 +510,16 @@ function saveTrip(e) {
   setDefaultDate();
   renderAll();
   document.getElementById("feedback-title").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+
+function getAgeFactor(age) {
+  const numericAge = Number(age);
+  if (numericAge <= 8) return 1.40;
+  if (numericAge <= 10) return 1.30;
+  if (numericAge <= 12) return 1.20;
+  if (numericAge <= 15) return 1.10;
+  return 1.00;
 }
 
 function makeFeedback(profile, gains, xpEarned, rankUpIndex = null, trip = null) {
@@ -514,7 +548,10 @@ function makeFeedback(profile, gains, xpEarned, rankUpIndex = null, trip = null)
     bonusParts.push(`Dette var gang nummer ${trip.visitNumber} på denne turen, og du fikk ${trip.milestoneBonus} bonus-XP for å nå en ny turmilepæl.`);
   }
   const bonusText = bonusParts.length ? ` ${bonusParts.join(" ")}` : "";
-  const xpText = ` Denne turen ga deg totalt ${xpEarned} XP!`;
+  const ageText = trip?.ageFactor > 1
+    ? ` Alderstilpasningen ga deg ${trip.baseXp - trip.originalBaseXp} ekstra XP på den vanlige turbelønningen.`
+    : "";
+  const xpText = `${ageText} Denne turen ga deg totalt ${xpEarned} XP!`;
   const rankText = rankUpIndex !== null
     ? ` Gratulerer – du er nå ${xpRanks[rankUpIndex].title}!`
     : "";
@@ -561,6 +598,7 @@ function renderProfileSelector() {
 
 function renderProfileForm(p) {
   document.getElementById("profile-name").value = p.name;
+  document.getElementById("profile-age").value = Number.isInteger(Number(p.age)) && Number(p.age) > 0 ? p.age : "";
   document.getElementById("favorite-player").value = p.favoritePlayer;
   document.getElementById("profile-image").value = "";
   document.getElementById("profile-camera").value = "";

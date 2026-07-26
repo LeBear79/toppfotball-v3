@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Toppfotball</title>
   <meta name="description" content="Toppfotball gjør turer motiverende med fotballinspirert utvikling.">
-  <link rel="stylesheet" href="style.css?v=0.3.2">
+  <link rel="stylesheet" href="style.css?v=0.3.3">
 </head>
 <body>
   <header class="topbar">
@@ -67,6 +67,11 @@
         <div class="field">
           <label for="profile-name">Navn</label>
           <input id="profile-name" type="text" placeholder="Skriv inn navn">
+        </div>
+        <div class="field">
+          <label for="profile-age">Alder</label>
+          <input id="profile-age" type="number" min="4" max="99" step="1" inputmode="numeric" placeholder="For eksempel 8" required>
+          <small>Brukes bare til å gjøre XP-fordelingen rettferdig mellom barn og voksne.</small>
         </div>
         <div class="field">
           <label for="favorite-player">Favorittspiller</label>
@@ -260,7 +265,7 @@
     </section>
   </main>
 
-  <script src="script.js?v=0.3.2"></script>
+  <script src="script.js?v=0.3.3"></script>
 
   <div id="rank-up-overlay" class="rank-up-overlay" hidden>
     <div class="rank-up-card" role="dialog" aria-modal="true" aria-labelledby="rank-up-heading">
