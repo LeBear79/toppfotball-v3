@@ -235,3 +235,17 @@ select{-webkit-appearance:none;appearance:none}
 .backup-actions{display:flex;flex-wrap:wrap;gap:10px}
 .backup-actions .button{min-width:210px}
 @media(max-width:460px){.backup-actions{display:grid;grid-template-columns:1fr}.backup-actions .button{width:100%;min-width:0}}
+
+
+/* =========================================================
+   v0.3.4 – aktivitetstype
+   ========================================================= */
+
+#trip-type {
+  color: #ffffff;
+}
+
+#trip-type option {
+  color: #ffffff;
+  background: #102943;
+}

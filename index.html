@@ -205,6 +205,17 @@
               <label for="trip-name">Navn på turen</label>
               <input id="trip-name" type="text" required>
             </div>
+            <div class="field full">
+              <label for="trip-type">Type tur</label>
+              <div class="control-with-icon select-control">
+                <select id="trip-type">
+                  <option value="hike" selected>Fottur</option>
+                  <option value="bike">Sykkeltur</option>
+                  <option value="ski">Skitur</option>
+                </select>
+                <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+              </div>
+            </div>
             <div class="field">
               <label for="trip-date">Dato</label>
               <div class="control-with-icon date-control">
@@ -265,7 +276,7 @@
     </section>
   </main>
 
-  <script src="script.js?v=0.3.3"></script>
+  <script src="script.js?v=0.3.4"></script>
 
   <div id="rank-up-overlay" class="rank-up-overlay" hidden>
     <div class="rank-up-card" role="dialog" aria-modal="true" aria-labelledby="rank-up-heading">

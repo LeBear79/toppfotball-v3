@@ -1,5 +1,38 @@
 const STORAGE_KEY = "toppfotball-v2";
-const APP_VERSION = "0.3.3";
+const APP_VERSION = "0.3.4";
+
+const activityProfiles = {
+  hike: {
+    label: "Fottur",
+    distanceFactor: 1.00,
+    gainFactors: { motor: 1.00, strength: 1.00, balance: 1.00, mindset: 1.00 },
+    feedback: [
+      "På fottur jobber både beina, balansen og motoren. Det kan hjelpe deg å orke mer og stå stødigere på fotballbanen.",
+      "Fotturer gir kroppen variert trening. Du bygger utholdenhet og sterke bein som er nyttige i både spurter og dueller.",
+      "Når du går i variert terreng, trener du både kroppskontroll og utholdenhet. Det kan gjøre deg tryggere når du løper, vender og kjemper om ballen."
+    ]
+  },
+  bike: {
+    label: "Sykkeltur",
+    distanceFactor: 0.45,
+    gainFactors: { motor: 1.15, strength: 1.20, balance: 0.70, mindset: 0.90 },
+    feedback: [
+      "Sykkelturen ga ekstra jobb til lår og motor. Det kan hjelpe deg å ta flere spurter og fortsatt ha kraft igjen i beina.",
+      "På sykkel trener du beina mange ganger om igjen. Det kan gi bedre utholdenhet og mer kraft når du skal akselerere på banen.",
+      "Sykkelturer er super trening for lår og kondisjon. Det kan gjøre det lettere å holde fart gjennom hele kampen."
+    ]
+  },
+  ski: {
+    label: "Skitur",
+    distanceFactor: 0.75,
+    gainFactors: { motor: 1.15, strength: 1.00, balance: 1.20, mindset: 1.00 },
+    feedback: [
+      "Skituren trente hele kroppen, balansen og motoren. Det kan hjelpe deg med kroppskontroll og med å holde tempoet oppe i kamp.",
+      "På ski må du bruke både bein, armer og balanse. Det kan gjøre kroppen sterkere og mer stabil når du spiller fotball.",
+      "Skiturer gir god utholdenhet og krever balanse. Det kan hjelpe deg når du vender, holder deg på beina og jobber gjennom hele kampen."
+    ]
+  }
+};
 
 const skillProfiles = {
   motor: {
@@ -463,6 +496,7 @@ function saveTrip(e) {
   const trip = {
     id: makeId(),
     name: value("trip-name"),
+    activityType: value("trip-type") || "hike",
     date: value("trip-date"),
     distance: numberValue("trip-distance"),
     elevation: numberValue("trip-elevation"),
@@ -472,22 +506,34 @@ function saveTrip(e) {
   };
 
   const previousVisits = p.trips.filter(existingTrip =>
-    normalizeTripName(existingTrip.name) === normalizeTripName(trip.name)
+    normalizeTripName(existingTrip.name) === normalizeTripName(trip.name) &&
+    (existingTrip.activityType || "hike") === trip.activityType
   ).length;
   trip.visitNumber = previousVisits + 1;
   trip.newPeakBonus = trip.newPeak ? 50 : 0;
   trip.milestoneBonus = !trip.newPeak && trip.visitNumber >= 2 && trip.visitNumber % 2 === 0 ? 25 : 0;
 
+  const activity = activityProfiles[trip.activityType] || activityProfiles.hike;
+
+  const rawGains = {
+    motor: trip.distance / 2 + trip.speed / 4,
+    strength: trip.elevation / 120 + trip.effort / 2,
+    balance: trip.elevation / 220 + (trip.newPeak ? 2 : 0),
+    mindset: trip.effort + (trip.newPeak ? 1 : 0)
+  };
+
   const gains = {
-    motor: clamp(Math.round(trip.distance / 2 + trip.speed / 4), 1, 8),
-    strength: clamp(Math.round(trip.elevation / 120 + trip.effort / 2), 1, 8),
-    balance: clamp(Math.round(trip.elevation / 220 + (trip.newPeak ? 2 : 0)), 1, 6),
-    mindset: clamp(Math.round(trip.effort + (trip.newPeak ? 1 : 0)), 1, 7)
+    motor: clamp(Math.round(rawGains.motor * activity.gainFactors.motor), 1, 8),
+    strength: clamp(Math.round(rawGains.strength * activity.gainFactors.strength), 1, 8),
+    balance: clamp(Math.round(rawGains.balance * activity.gainFactors.balance), 1, 6),
+    mindset: clamp(Math.round(rawGains.mindset * activity.gainFactors.mindset), 1, 7)
   };
 
   trip.gains = gains;
   trip.originalBaseXp = Math.max(10, Math.round(
-    trip.distance * 8 + trip.elevation * 0.08 + trip.effort * 7 +
+    trip.distance * 8 * activity.distanceFactor +
+    trip.elevation * 0.08 +
+    trip.effort * 7 +
     Object.values(gains).reduce((a,b)=>a+b,0)
   ));
   trip.ageAtRegistration = Number(p.age);
@@ -507,6 +553,7 @@ function saveTrip(e) {
 
   saveData();
   e.target.reset();
+  document.getElementById("trip-type").value = "hike";
   setDefaultDate();
   renderAll();
   document.getElementById("feedback-title").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -540,6 +587,10 @@ function makeFeedback(profile, gains, xpEarned, rankUpIndex = null, trip = null)
   const identities = `${first.identity} og ${second.identity}`;
 
   const mainText = template({ opening, identities, effect1: firstEffect, effect2: secondEffect, connector, ending });
+  const activity = activityProfiles[trip?.activityType || "hike"] || activityProfiles.hike;
+  const activityText = trip
+    ? ` ${pickFresh(profile, activity.feedback, `activity-${trip.activityType || "hike"}`, 2)}`
+    : "";
   const bonusParts = [];
   if (trip?.newPeakBonus) {
     bonusParts.push(`Du oppdaget en ny topp og fikk ${trip.newPeakBonus} bonus-XP.`);
@@ -555,7 +606,7 @@ function makeFeedback(profile, gains, xpEarned, rankUpIndex = null, trip = null)
   const rankText = rankUpIndex !== null
     ? ` Gratulerer – du er nå ${xpRanks[rankUpIndex].title}!`
     : "";
-  const text = `${mainText}${bonusText}${xpText}${rankText}`;
+  const text = `${mainText}${activityText}${bonusText}${xpText}${rankText}`;
   profile.recentFullFeedback ||= [];
   profile.recentFullFeedback.push(text);
   profile.recentFullFeedback = profile.recentFullFeedback.slice(-6);
